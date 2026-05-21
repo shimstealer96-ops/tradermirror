@@ -1,7 +1,7 @@
 'use client'
 import { Check, Lock } from 'lucide-react'
 import Link from 'next/link'
-import Header from '@/components/Header'
+
 
 const freeFeatures = [
   '매매일지 하루 5개 등록',
@@ -50,7 +50,6 @@ const faqs = [
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100">
-      <Header />
       <main className="max-w-5xl mx-auto px-4 py-16">
         {/* Title */}
         <div className="text-center mb-12">

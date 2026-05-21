@@ -107,7 +107,11 @@ export default function HomePage() {
                 </span>
                 <br />
                 <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                  반복되는 실수를 보여줍니다.
+                  반복되는 실수를
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                  보여줍니다.
                 </span>
               </h1>
               <p className="text-slate-400 text-lg leading-relaxed mb-8">

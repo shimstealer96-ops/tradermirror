@@ -126,7 +126,7 @@ export default function HomePage() {
                     무료로 매매패턴 분석하기 →
                   </button>
                 </Link>
-                <Link href="/analyze">
+                <Link href="/sample-report">
                   <button className="px-6 py-3.5 border border-slate-600 text-slate-300 hover:bg-slate-800 font-bold rounded-xl transition-colors text-base">
                     샘플 리포트 보기
                   </button>
@@ -157,7 +157,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">손익비</p>
-                      <p className="text-2xl font-black text-red-400">0.49</p>
+                      <p className="text-2xl font-black text-red-400">0.35</p>
                     </div>
                     <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
                       손익비 낮음
@@ -173,18 +173,18 @@ export default function HomePage() {
                   <div className="flex items-center gap-6 mb-3">
                     <div>
                       <p className="text-xs text-slate-500">수익 평균</p>
-                      <p className="text-xl font-black text-emerald-400">1.2일</p>
+                      <p className="text-xl font-black text-emerald-400">0.2일</p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">손실 평균</p>
-                      <p className="text-xl font-black text-red-400">6.8일</p>
+                      <p className="text-xl font-black text-red-400">4.4일</p>
                     </div>
                   </div>
                   <div className="space-y-1 mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-500 w-12">수익</span>
                       <div className="flex-1 bg-slate-800 rounded-full h-2">
-                        <div className="bg-emerald-500 h-2 rounded-full" style={{ width: "18%" }} />
+                        <div className="bg-emerald-500 h-2 rounded-full" style={{ width: "4%" }} />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -205,7 +205,7 @@ export default function HomePage() {
                     <AlertTriangle className="h-4 w-4 text-amber-400" />
                     <p className="text-xl font-black text-amber-400">장 초반 추격매수</p>
                     <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                      9시대 손실 집중
+                      9시대 5건 전부 손실
                     </span>
                   </div>
                   <p className="text-sm text-slate-300 font-medium mb-1">9시대 진입 거래에서 손실이 집중됩니다.</p>

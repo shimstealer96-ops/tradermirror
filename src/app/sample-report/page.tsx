@@ -289,6 +289,114 @@ export default function SampleReportPage() {
           </div>
         </div>
 
+        {/* ── PRO 잠긴 분석 미리보기 ── */}
+        <div className="mb-8">
+          {/* 섹션 헤더 */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-px flex-1 bg-slate-800" />
+            <span className="text-xs font-bold text-blue-400 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+              Pro 전용 심층 분석
+            </span>
+            <div className="h-px flex-1 bg-slate-800" />
+          </div>
+
+          {/* 블러 카드 묶음 */}
+          <div className="relative rounded-2xl overflow-hidden">
+            {/* 블러 콘텐츠 */}
+            <div className="space-y-4 select-none pointer-events-none">
+
+              {/* 블러 카드 1: 감정 상태별 성과 */}
+              <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-5 blur-[3px] opacity-60">
+                <p className="text-xs text-slate-400 mb-3 font-medium">감정 상태별 성과 분석</p>
+                <div className="space-y-2">
+                  {['냉정함', '불안', '흥분', '복수심', '무감각'].map((emotion, i) => {
+                    const vals = [72, 28, 15, -12, 45]
+                    const widths = [72, 28, 15, 0, 45]
+                    const colors = ['bg-emerald-500', 'bg-red-500', 'bg-red-400', 'bg-red-600', 'bg-emerald-400']
+                    return (
+                      <div key={emotion} className="flex items-center gap-3">
+                        <span className="text-xs text-slate-400 w-14 shrink-0">{emotion}</span>
+                        <div className="flex-1 bg-slate-800 rounded-full h-2">
+                          <div className={`${colors[i]} h-2 rounded-full`} style={{ width: `${widths[i]}%` }} />
+                        </div>
+                        <span className={`text-xs font-bold w-12 text-right ${vals[i] >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {vals[i] >= 0 ? '+' : ''}{vals[i]}%
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-slate-500 mt-3">복수심·흥분 상태에서 진입한 거래의 손실률이 가장 높습니다.</p>
+              </div>
+
+              {/* 블러 카드 2: 진입 근거별 성과 */}
+              <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-5 blur-[3px] opacity-60">
+                <p className="text-xs text-slate-400 mb-3 font-medium">진입 근거별 성과 분석</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: '지지선 반등', win: 68, cnt: 12 },
+                    { label: '뉴스/이슈', win: 31, cnt: 8 },
+                    { label: '눌림목', win: 72, cnt: 9 },
+                    { label: '감으로', win: 18, cnt: 11 },
+                  ].map(item => (
+                    <div key={item.label} className={`rounded-lg p-3 border ${item.win >= 50 ? 'bg-emerald-950/30 border-emerald-500/20' : 'bg-red-950/30 border-red-500/20'}`}>
+                      <p className="text-xs text-slate-400 mb-1">{item.label}</p>
+                      <p className={`text-xl font-black ${item.win >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>{item.win}%</p>
+                      <p className="text-xs text-slate-500">{item.cnt}건</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500 mt-3">근거 없이 진입한 거래의 승률이 18%로 가장 낮습니다.</p>
+              </div>
+
+              {/* 블러 카드 3: 손절 기준 작성 여부 */}
+              <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-5 blur-[3px] opacity-60">
+                <p className="text-xs text-slate-400 mb-3 font-medium">손절 기준 작성 여부별 성과</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center bg-emerald-950/30 border border-emerald-500/20 rounded-xl p-4">
+                    <p className="text-xs text-slate-400 mb-1">기준 있음</p>
+                    <p className="text-3xl font-black text-emerald-400">67%</p>
+                    <p className="text-xs text-slate-500 mt-1">승률</p>
+                    <p className="text-xs text-emerald-400 mt-1">평균 손실 -18,000원</p>
+                  </div>
+                  <div className="text-center bg-red-950/30 border border-red-500/20 rounded-xl p-4">
+                    <p className="text-xs text-slate-400 mb-1">기준 없음</p>
+                    <p className="text-3xl font-black text-red-400">22%</p>
+                    <p className="text-xs text-slate-500 mt-1">승률</p>
+                    <p className="text-xs text-red-400 mt-1">평균 손실 -89,000원</p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 mt-3">손절 기준을 미리 적은 거래의 손실 크기가 5분의 1 수준입니다.</p>
+              </div>
+            </div>
+
+            {/* 잠금 오버레이 */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#090d16]/10 via-[#090d16]/70 to-[#090d16]/95 rounded-2xl">
+              <div className="text-center px-6 pt-32">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500/20 border border-blue-500/30 mb-4">
+                  <svg className="h-7 w-7 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <p className="text-xs font-bold text-blue-400 mb-2">Pro 전용 분석</p>
+                <h3 className="text-xl font-black text-slate-100 mb-3">
+                  더 깊은 분석 3가지가<br />잠겨 있습니다
+                </h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                  감정 상태별 · 진입 근거별 · 손절 기준별 성과 분석<br />
+                  내가 <span className="text-slate-200 font-bold">어떤 상태에서 손실을 반복하는지</span> 확인하세요.
+                </p>
+                <Link href="/pricing">
+                  <button className="px-7 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-colors shadow-lg shadow-blue-500/30 text-sm">
+                    7일 무료로 Pro 시작하기 →
+                  </button>
+                </Link>
+                <p className="text-xs text-slate-600 mt-3">7일 무료 체험 · 이후 월 ₩9,900 · 언제든 해지 가능</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* ── CTA ── */}
         <div className="bg-blue-950/40 border border-blue-500/30 rounded-2xl p-8 text-center">
           <h3 className="text-xl font-black text-slate-100 mb-2">내 실제 거래내역으로 분석해보세요</h3>

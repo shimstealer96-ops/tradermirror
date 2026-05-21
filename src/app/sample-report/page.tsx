@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Clock, BarChart2, ArrowLeft } from 'lucide-react'
-import Header from '@/components/Header'
 
 const trades = [
   { name: '삼성전자', buyDate: '2026.05.11', buyTime: '09:12', buyPrice: 78500, qty: 10, sellDate: '2026.05.11', sellTime: '09:46', sellPrice: 77200, pct: -1.66, pnl: -13000, holdDays: 0 },
@@ -23,7 +22,6 @@ const losses = trades.filter(t => t.pct < 0)
 export default function SampleReportPage() {
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100">
-      <Header />
       <main className="max-w-4xl mx-auto px-4 py-10">
 
         {/* Back */}

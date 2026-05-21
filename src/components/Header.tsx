@@ -25,6 +25,7 @@ export default function Header() {
   const navLinks = [
     { name: "매매분석", href: "/analyze" },
     { name: "계산기", href: "/tools" },
+    { name: "요금제", href: "/pricing" },
     { name: "전자책", href: "/#ebook" },
   ];
 

@@ -2,13 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TrendingUp, BookOpen, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { TrendingUp, BookOpen, Menu, X, LayoutDashboard } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export default function Header() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const navLinks = [
     { name: "매매분석", href: "/analyze" },
@@ -50,8 +62,22 @@ export default function Header() {
             })}
           </nav>
 
-          {/* Ebook CTA Button (Desktop) */}
-          <div className="hidden md:flex items-center space-x-4">
+          {/* Right Side */}
+          <div className="hidden md:flex items-center space-x-3">
+            {user ? (
+              <Link href="/dashboard">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <LayoutDashboard className="h-4 w-4" />
+                  매매일지
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button variant="outline" size="sm">
+                  로그인
+                </Button>
+              </Link>
+            )}
             <Link href="/#ebook">
               <Button variant="primary" size="sm" className="gap-2">
                 <BookOpen className="h-4 w-4" />
@@ -93,7 +119,28 @@ export default function Header() {
                 </Link>
               );
             })}
-            <div className="px-3 py-2">
+            {user && (
+              <Link
+                href="/dashboard"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium ${
+                  pathname === '/dashboard' || pathname === '/journal'
+                    ? "bg-slate-900 text-blue-500"
+                    : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                }`}
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                매매일지
+              </Link>
+            )}
+            <div className="px-3 py-2 space-y-2">
+              {!user && (
+                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="outline" size="md" className="w-full">
+                    로그인
+                  </Button>
+                </Link>
+              )}
               <Link href="/#ebook" onClick={() => setIsMobileMenuOpen(false)}>
                 <Button variant="primary" size="md" className="w-full gap-2">
                   <BookOpen className="h-4 w-4" />

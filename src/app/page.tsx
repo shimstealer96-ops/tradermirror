@@ -149,7 +149,7 @@ export default function LandingPage() {
       <button
         onClick={() => setLeadPopupOpen(true)}
         className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-3 rounded-full shadow-lg flex items-center gap-2 transition-colors">
-        🎁 전자책 50% 할인권 받기
+        🎁 무료 혜택 4종 받기
       </button>
 
       {/* SECTION 1: HERO */}

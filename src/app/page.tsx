@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   TrendingUp,
   Calculator,
@@ -12,9 +11,8 @@ import {
   ChevronDown,
   ChevronUp,
   BookOpen,
-  X,
 } from "lucide-react";
-import LeadForm from "@/components/LeadForm";
+import LeadPopup from "@/components/LeadPopup";
 
 const targetUsers = [
   { emoji: "📉", text: "사면 떨어지고, 팔면 오르는 것 같은 분" },
@@ -118,13 +116,6 @@ const faqs = [
   },
 ];
 
-const benefitsList = [
-  "TraderMirror 7일 무료 체험권",
-  "MoneyStep 전자책 50% 할인권",
-  "첫 매수 전 체크리스트",
-  "투자상태별 1:1 맞춤 진단",
-  "전자책 미리보기 PDF",
-];
 
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
@@ -146,83 +137,28 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-function CTAPopup({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="relative bg-[#0f1623] border border-slate-700 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 transition-colors z-10"
-          aria-label="닫기"
-        >
-          <X className="h-6 w-6" />
-        </button>
-
-        <div className="p-6 pb-2">
-          <h2 className="text-xl font-black text-slate-100 leading-snug pr-8">
-            분석 결과와 전자책 할인권을 받을 연락처를 입력해주세요
-          </h2>
-          <p className="mt-3 text-sm text-slate-400 leading-relaxed">
-            TraderMirror 무료 분석 결과와 MoneyStep 전자책 50% 할인권을 보내드리기 위해 기본 정보를 입력해주세요.
-            정확한 연락처를 남겨주셔야 분석 결과와 할인권 제공이 가능합니다.
-          </p>
-
-          <div className="mt-4 space-y-1.5">
-            {benefitsList.slice(0, 4).map((b, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span className="text-slate-300 text-sm">{b}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="p-6 pt-4">
-          <LeadForm
-            source="cta_popup"
-            compact={true}
-            onSuccess={onSuccess}
-          />
-          <button
-            onClick={onClose}
-            className="mt-3 w-full text-sm text-slate-500 hover:text-slate-400 transition-colors py-2"
-          >
-            나중에 할게요
-          </button>
-          <p className="mt-2 text-center text-xs text-slate-600">
-            분석 결과 저장과 할인권 제공은 연락처 입력 후 가능합니다.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function LandingPage() {
-  const router = useRouter();
-  const [showPopup, setShowPopup] = useState(false);
-  const [leadFormDone, setLeadFormDone] = useState(false);
+  const [leadPopupOpen, setLeadPopupOpen] = useState(false);
 
-  const handleCTAClick = () => {
-    setShowPopup(true);
-  };
-
-  const handlePopupSuccess = () => {
-    setShowPopup(false);
-    router.push("/analyze");
-  };
-
-  const handlePopupClose = () => {
-    setShowPopup(false);
-    router.push("/analyze");
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!sessionStorage.getItem('lead_popup_dismissed')) {
+        setLeadPopupOpen(true)
+      }
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="flex flex-col bg-[#090d16] overflow-x-hidden">
 
-      {showPopup && (
-        <CTAPopup onClose={handlePopupClose} onSuccess={handlePopupSuccess} />
-      )}
+      <LeadPopup isOpen={leadPopupOpen} onClose={() => setLeadPopupOpen(false)} />
+
+      <button
+        onClick={() => setLeadPopupOpen(true)}
+        className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-3 rounded-full shadow-lg flex items-center gap-2 transition-colors">
+        🎁 전자책 50% 할인권 받기
+      </button>
 
       {/* SECTION 1: HERO */}
       <section className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 md:pt-32 md:pb-28 flex flex-col items-center text-center">
@@ -235,12 +171,11 @@ export default function LandingPage() {
         <p className="mt-6 text-base sm:text-lg text-slate-400 max-w-2xl leading-relaxed whitespace-pre-line">
           {`거래내역을 붙여넣거나, 매일 기록한 매매일지를 불러오세요.\n승률, 손익비, 시간대, 진입 근거, 감정 상태, 손절 습관까지\n내가 반복해서 잃는 패턴을 데이터로 보여드립니다.`}
         </p>
-        <button
-          onClick={handleCTAClick}
-          className="mt-10 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-xl text-lg transition-colors"
-        >
-          무료로 매매패턴 분석하기 →
-        </button>
+        <Link href="/analyze">
+          <button className="mt-10 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-xl text-lg transition-colors">
+            무료로 매매패턴 분석하기 →
+          </button>
+        </Link>
         <p className="mt-4 text-xs text-slate-500">증권사 연동 없음 · 종목 추천 없음 · 수익 보장 없음</p>
       </section>
 
@@ -313,58 +248,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION 6: LEAD FORM — 투자상태별 혜택 신청 */}
-      <section className="w-full bg-slate-900/20 border-y border-slate-800">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-100">
-              내 투자상태에 맞는 혜택과 전자책 할인권 받기
-            </h2>
-            <p className="mt-4 text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              주식을 처음 시작하는 사람과 코인 선물을 하는 사람에게 필요한 기준은 다릅니다.
-              30초만 입력해주시면 현재 투자 상태에 맞는 혜택과 MoneyStep 전자책 50% 할인권을 보내드립니다.
-            </p>
-          </div>
-
-          {leadFormDone ? (
-            <div className="max-w-md mx-auto text-center bg-slate-900/40 border border-emerald-500/30 rounded-2xl p-10">
-              <CheckCircle2 className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
-              <h3 className="text-xl font-black text-slate-100 mb-3">
-                신청 혜택이 접수되었습니다
-              </h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                입력해주신 연락처와 이메일로 안내드릴 예정입니다.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-              <div>
-                <p className="text-slate-300 font-semibold mb-4">신청 시 제공 혜택</p>
-                <div className="space-y-3">
-                  {benefitsList.map((b, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-                      <span className="text-slate-300 text-sm">{b}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6 p-4 bg-slate-900/60 border border-slate-700 rounded-xl">
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    MoneyStep 첫 투자 교과서 전자책<br />
-                    <span className="line-through text-slate-600">정가 ₩19,900</span>
-                    {" "}→{" "}
-                    <span className="text-emerald-400 font-bold">신청자 한정 ₩9,900</span>
-                  </p>
-                </div>
-              </div>
-              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
-                <LeadForm
-                  source="landing_form"
-                  onSuccess={() => setLeadFormDone(true)}
-                />
-              </div>
-            </div>
-          )}
+      {/* SECTION 6: LEAD TEASER */}
+      <section className="py-16 px-4">
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="text-slate-400 mb-4">내 투자상태에 맞는 혜택과 전자책 할인권을 받아보세요</p>
+          <button onClick={() => setLeadPopupOpen(true)}
+            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors">
+            혜택·할인권 받기
+          </button>
         </div>
       </section>
 
@@ -474,12 +365,11 @@ export default function LandingPage() {
           <h2 className="text-2xl sm:text-3xl font-black text-slate-100 mb-6">
             지금 바로 내 매매패턴을 확인해보세요
           </h2>
-          <button
-            onClick={handleCTAClick}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-xl text-lg transition-colors"
-          >
-            무료로 매매패턴 분석하기 →
-          </button>
+          <Link href="/analyze">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-xl text-lg transition-colors">
+              무료로 매매패턴 분석하기 →
+            </button>
+          </Link>
           <p className="mt-6 text-xs text-slate-500 max-w-lg mx-auto leading-relaxed">
             본 서비스는 투자 판단을 대신하지 않으며, 종목 추천·매수/매도 지시·수익 보장을 제공하지 않습니다. 모든 투자의 책임은 투자자 본인에게 있습니다.
           </p>

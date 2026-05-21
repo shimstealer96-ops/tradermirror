@@ -429,10 +429,13 @@ export default function LandingPage() {
         <span className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 단계별 학습 가능</span>
         <span className="flex items-center gap-2"><span className="text-emerald-400">✓</span> 종목 추천 아닌 판단 기준 학습</span>
       </div>
-      <button onClick={() => setLeadPopupOpen(true)}
-        className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-lg transition-colors shadow-lg shadow-emerald-500/10">
-        내게 맞는 전자책 50% 할인권 받기 →
-      </button>
+      <a
+        href="https://moneystep.imweb.me/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-lg transition-colors shadow-lg shadow-emerald-500/10">
+        내게 맞는 전자책 보러가기 →
+      </a>
       <p className="text-xs text-slate-600 mt-4">
         본 자료는 학습용이며 종목 추천, 매수·매도 지시, 수익 보장을 제공하지 않습니다.
       </p>

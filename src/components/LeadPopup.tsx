@@ -146,13 +146,13 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
             <CheckCircle2 className="h-16 w-16 text-emerald-400 mx-auto mb-6" />
             <h2 className="text-2xl font-black text-slate-100 mb-4">신청 혜택이 제공될 예정입니다</h2>
             <p className="text-slate-400 leading-relaxed mb-8 max-w-lg mx-auto text-sm">
-              입력해주신 정보를 기준으로 TraderMirror 7일 무료 체험권과
+              입력해주신 정보를 기준으로 TraderMirror Pro 기능 7일권과
               실수를 줄이는 투자 교과서 50% 할인권을 안내드릴 예정입니다.<br />
               혜택은 입력하신 연락처와 이메일로 발송됩니다.
             </p>
             <div className="space-y-2.5 mb-8 inline-block text-left">
               {[
-                'TraderMirror 7일 무료 체험권',
+                'Pro 기능 7일권 추가 무료제공',
                 '실수를 줄이는 투자 교과서 50% 할인권',
                 '첫 매수 전 체크리스트',
                 '투자상태별 1:1 맞춤 진단',
@@ -197,7 +197,7 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
                 지금 내 투자상태, 어디서 막히는지 확인해보세요
               </h2>
               <p className="text-slate-400 text-sm mb-1">
-                30초만 입력하면 TraderMirror 7일 무료 체험권과 실수를 줄이는 투자 교과서 50% 할인권을 보내드립니다.
+                30초만 입력하면 TraderMirror Pro 기능 7일권과 실수를 줄이는 투자 교과서 50% 할인권을 보내드립니다.
               </p>
               <p className="text-emerald-400 text-xs font-medium">
                 혜택은 입력하신 연락처와 이메일로 발송됩니다.
@@ -212,9 +212,9 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
                 {/* Card 1: Free trial */}
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                   <span className="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                    무료 체험
+                    무료 제공
                   </span>
-                  <p className="text-sm font-bold text-slate-100 mb-1">TraderMirror 7일 무료 체험권</p>
+                  <p className="text-sm font-bold text-slate-100 mb-1">Pro 기능 7일권 추가 무료제공</p>
                   <p className="text-xs text-slate-400 leading-relaxed">
                     내 매매패턴, 승률, 손익비, 반복 실수를 직접 확인해볼 수 있습니다.
                   </p>

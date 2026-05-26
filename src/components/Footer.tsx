@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TrendingUp, AlertTriangle } from "lucide-react";
+import { TrendingUp, AlertTriangle, Mail } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -43,11 +43,18 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Links Column 2 */}
+          {/* Links Column 2 — 문의 */}
           <div>
             <h4 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-4">문의 및 정보</h4>
-            <p className="text-sm text-slate-400 mb-2">support@tradermirror.com</p>
-            <p className="text-xs text-slate-500">© 2026 TraderMirror. All rights reserved.</p>
+            <p className="text-sm text-slate-400 mb-4">biinohiiketsu@gmail.com</p>
+            <a
+              href="mailto:biinohiiketsu@gmail.com?subject=TraderMirror 문의"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white text-sm font-medium rounded-xl transition-all"
+            >
+              <Mail className="h-4 w-4" />
+              문의하기
+            </a>
+            <p className="text-xs text-slate-500 mt-6">© 2026 TraderMirror. All rights reserved.</p>
           </div>
         </div>
 

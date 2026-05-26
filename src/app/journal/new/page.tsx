@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { TrendingUp, ChevronDown, ChevronUp } from 'lucide-react'
+import { TrendingUp, TrendingDown, BarChart2, Coins, Zap, ChevronDown, ChevronUp } from 'lucide-react'
 import LimitModal from '@/components/LimitModal'
 import { useDailyLimits } from '@/hooks/useDailyLimits'
 import { useUserPlan } from '@/hooks/useUserPlan'
@@ -13,11 +13,19 @@ import { DEFAULT_PLAN_CONFIG, isProOrTrial } from '@/lib/planConfig'
 // 상수
 // ─────────────────────────────────────────
 const ASSET_TYPES = [
-  { key: 'stock_spot',     label: '주식 현물', emoji: '📈', desc: '국내·미국 주식, ETF' },
-  { key: 'stock_futures',  label: '주식 선물', emoji: '📊', desc: '코스피200, 나스닥100 선물' },
-  { key: 'crypto_spot',    label: '코인 현물', emoji: '🪙', desc: '업비트, 바이낸스 현물' },
-  { key: 'crypto_futures', label: '코인 선물', emoji: '⚡', desc: '바이낸스, 바이비트 선물' },
+  { key: 'stock_spot',     label: '주식 현물', icon: 'stock',   desc: '국내·미국 주식, ETF' },
+  { key: 'stock_futures',  label: '주식 선물', icon: 'futures', desc: '코스피200, 나스닥100 선물' },
+  { key: 'crypto_spot',    label: '코인 현물', icon: 'coin',    desc: '업비트, 바이낸스 현물' },
+  { key: 'crypto_futures', label: '코인 선물', icon: 'cf',      desc: '바이낸스, 바이비트 선물' },
 ]
+
+function AssetIcon({ icon, className = 'h-6 w-6' }: { icon: string; className?: string }) {
+  if (icon === 'stock')   return <TrendingUp className={className} />
+  if (icon === 'futures') return <BarChart2 className={className} />
+  if (icon === 'coin')    return <Coins className={className} />
+  if (icon === 'cf')      return <Zap className={className} />
+  return <TrendingUp className={className} />
+}
 
 const ENTRY_REASONS = [
   { key: 'order_block',    label: '지지/저항' },
@@ -433,7 +441,9 @@ export default function NewTradePage() {
             <button key={a.key} type="button"
               onClick={() => { setAssetType(a.key); setShowDetail(false) }}
               className={`p-4 rounded-xl border text-left transition-all ${assetType === a.key ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 bg-slate-900/60 hover:border-slate-500'}`}>
-              <div className="text-2xl mb-1">{a.emoji}</div>
+              <div className={`mb-2 ${assetType === a.key ? 'text-blue-400' : 'text-slate-400'}`}>
+                <AssetIcon icon={a.icon} className="h-6 w-6" />
+              </div>
               <div className="font-bold text-sm text-slate-100">{a.label}</div>
               <div className="text-xs text-slate-500 mt-0.5">{a.desc}</div>
             </button>

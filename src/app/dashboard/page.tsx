@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { TrendingUp, Plus, BookOpen, LogOut } from 'lucide-react'
+import TrialBannerWrapper from '@/components/TrialBannerWrapper'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -56,6 +57,7 @@ export default async function DashboardPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+        <TrialBannerWrapper />
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">대시보드</h1>
           <Link

@@ -4,6 +4,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { TrendingUp, ChevronRight, ChevronLeft, Calculator } from 'lucide-react'
+import LimitModal from '@/components/LimitModal'
+import { useDailyLimits } from '@/hooks/useDailyLimits'
+import { useUserPlan } from '@/hooks/useUserPlan'
+import { DEFAULT_PLAN_CONFIG, isProOrTrial } from '@/lib/planConfig'
 
 // ─────────────────────────────────────────
 // 상수 정의
@@ -92,6 +96,11 @@ export default function NewTradePage() {
   const [loading, setLoading] = useState(false)
   const [assetType, setAssetType] = useState('')
   const [section, setSection] = useState(0)
+  const [showLimitModal, setShowLimitModal] = useState(false)
+
+  // 플랜/한도 훅
+  const { plan, loading: planLoading } = useUserPlan()
+  const { journalCountToday, loading: limitsLoading } = useDailyLimits()
 
   // ── 공통 필드
   const [common, setCommon] = useState({
@@ -230,6 +239,13 @@ export default function NewTradePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!assetType) { alert('자산 유형을 선택해주세요.'); return }
+
+    // Free 플랜 일지 한도 체크
+    if (!isProOrTrial(plan) && journalCountToday >= DEFAULT_PLAN_CONFIG.free_daily_journal_limit) {
+      setShowLimitModal(true)
+      return
+    }
+
     setLoading(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -404,6 +420,14 @@ export default function NewTradePage() {
   // ─────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100">
+
+      {/* 한도 초과 모달 */}
+      <LimitModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        type="journal"
+      />
+
       <header className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-6 w-6 text-blue-400" />

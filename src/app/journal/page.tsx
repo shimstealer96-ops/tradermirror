@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { TrendingUp, Plus, Pencil, Trash2 } from 'lucide-react'
+import TrialBannerWrapper from '@/components/TrialBannerWrapper'
 
 async function deleteTrade(formData: FormData) {
   'use server'
@@ -66,6 +67,7 @@ export default async function JournalPage({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        <TrialBannerWrapper />
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">매매 일지</h1>
           <Link

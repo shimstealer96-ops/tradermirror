@@ -39,6 +39,10 @@ import {
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Dialog, Skeleton, Toggle } from "@/components/ui";
 import { parseTradingJournal, fillMissingProfitRates, Transaction } from "@/utils/parser";
 import { createClient } from "@/lib/supabase/client";
+import LimitModal from "@/components/LimitModal";
+import { useDailyLimits } from "@/hooks/useDailyLimits";
+import { useUserPlan } from "@/hooks/useUserPlan";
+import { DEFAULT_PLAN_CONFIG, isProOrTrial } from "@/lib/planConfig";
 
 // ─── 확장 트랜잭션 타입 ────────────────────────────────────────────────────────
 interface ExtendedTransaction extends Transaction {
@@ -207,6 +211,10 @@ export default function AnalyzePage() {
   const [showManualForm, setShowManualForm] = useState(false);
   const [limitModalOpen, setLimitModalOpen] = useState(false);
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+
+  // 플랜/한도 훅
+  const { plan, loading: planLoading } = useUserPlan();
+  const { analysisCountToday, loading: limitsLoading } = useDailyLimits();
 
   // 분석 방식 선택
   const [analysisSource, setAnalysisSource] = useState<"text_paste" | "journal">("text_paste");
@@ -568,18 +576,22 @@ export default function AnalyzePage() {
       return;
     }
 
-    const usageKey = "tradermirror_trial_start";
-    const stored = localStorage.getItem(usageKey);
-    const now = Date.now();
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    // Free 플랜 분석 횟수 체크
+    if (!isProOrTrial(plan) && analysisCountToday >= DEFAULT_PLAN_CONFIG.free_daily_analysis_limit) {
+      setLimitModalOpen(true);
+      return;
+    }
 
-    if (!stored) {
-      localStorage.setItem(usageKey, String(now));
-    } else {
-      const startTime = Number(stored);
-      if (now - startTime > SEVEN_DAYS_MS) {
-        setLimitModalOpen(true);
-        return;
+    // analysis_runs에 기록 (Pro/Trial 아닌 경우에만)
+    if (!isProOrTrial(plan)) {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('analysis_runs').insert({ user_id: user.id });
+        }
+      } catch (e) {
+        console.error('analysis_runs insert failed', e);
       }
     }
 
@@ -1797,36 +1809,12 @@ export default function AnalyzePage() {
         </div>
       )}
 
-      {/* 무료 체험 기간 만료 모달 */}
-      <Dialog isOpen={limitModalOpen} onClose={() => setLimitModalOpen(false)}>
-        <div className="space-y-4 text-center">
-          <div className="p-3 bg-red-600/10 border border-red-600/20 rounded-full w-fit mx-auto">
-            <AlertTriangle className="h-6 w-6 text-red-500" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-100">7일 무료 체험 기간 만료</h3>
-          <p className="text-sm text-slate-400 leading-relaxed">
-            7일 무료 체험 기간이 끝났습니다. 계속 이용하시려면 <strong>프로 플랜</strong>으로 업그레이드하세요!
-          </p>
-          <div className="bg-slate-900/60 p-4 rounded-xl text-left border border-slate-800 space-y-2 text-xs">
-            <div className="flex justify-between text-slate-400">
-              <span>무료 체험 기간:</span><span className="text-slate-200">7일</span>
-            </div>
-            <div className="flex justify-between text-slate-400">
-              <span>상태:</span><span className="text-red-400 font-bold">체험 기간 만료</span>
-            </div>
-          </div>
-          <div className="flex space-x-3 pt-2">
-            <Button variant="outline" className="flex-1" onClick={() => setLimitModalOpen(false)}>닫기</Button>
-            <Button variant="primary" className="flex-1 font-bold shadow-md shadow-blue-500/25" onClick={() => {
-              alert("프로 플랜 모의 결제가 완료되었습니다. 무제한 분석이 해제됩니다.");
-              localStorage.removeItem("tradermirror_trial_start");
-              setLimitModalOpen(false);
-            }}>
-              프로 플랜 구독하기 (₩9,900/월)
-            </Button>
-          </div>
-        </div>
-      </Dialog>
+      {/* 분석 한도 초과 모달 */}
+      <LimitModal
+        isOpen={limitModalOpen}
+        onClose={() => setLimitModalOpen(false)}
+        type="analysis"
+      />
 
       {/* 전자책 CTA 모달 */}
       <Dialog isOpen={purchaseModalOpen} onClose={() => setPurchaseModalOpen(false)}>

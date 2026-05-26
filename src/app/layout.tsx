@@ -3,6 +3,7 @@ import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import TrialExpiryBanner from "@/components/TrialExpiryBanner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,6 +37,7 @@ export default function RootLayout({
     <html lang="ko" className={`${inter.variable} ${outfit.variable} h-full scroll-smooth`}>
       <body className="min-h-full bg-[#090d16] text-slate-100 flex flex-col antialiased">
         <Header />
+        <TrialExpiryBanner />
         <main className="flex-1 w-full flex flex-col">
           {children}
         </main>

@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TrendingUp, BookOpen, Menu, X, LayoutDashboard } from "lucide-react";
+import { TrendingUp, BookOpen, Menu, X, LayoutDashboard, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { useUserPlan } from "@/hooks/useUserPlan";
 
 export default function Header() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const { isTrial, isFree } = useUserPlan();
 
   useEffect(() => {
     const supabase = createClient();
@@ -66,25 +68,45 @@ export default function Header() {
           {/* Right Side */}
           <div className="hidden md:flex items-center space-x-3">
             {user ? (
-              <Link href="/dashboard">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <LayoutDashboard className="h-4 w-4" />
-                  매매일지
-                </Button>
-              </Link>
+              <>
+                <Link href="/dashboard">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <LayoutDashboard className="h-4 w-4" />
+                    매매일지
+                  </Button>
+                </Link>
+                {/* 체험 중 → Pro 업그레이드 강조 / Free → 7일 무료 시작 */}
+                {isTrial ? (
+                  <Link href="/pricing">
+                    <Button variant="primary" size="sm" className="gap-2 bg-amber-500 hover:bg-amber-600 border-amber-500">
+                      <Zap className="h-4 w-4" />
+                      Pro로 업그레이드
+                    </Button>
+                  </Link>
+                ) : isFree ? (
+                  <Link href="/pricing">
+                    <Button variant="primary" size="sm" className="gap-2">
+                      <Zap className="h-4 w-4" />
+                      7일 무료 시작
+                    </Button>
+                  </Link>
+                ) : null}
+              </>
             ) : (
-              <Link href="/login">
-                <Button variant="outline" size="sm">
-                  로그인
-                </Button>
-              </Link>
+              <>
+                <Link href="/login">
+                  <Button variant="outline" size="sm">
+                    로그인
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button variant="primary" size="sm" className="gap-2">
+                    <Zap className="h-4 w-4" />
+                    7일 무료 시작
+                  </Button>
+                </Link>
+              </>
             )}
-            <Link href="/#ebook">
-              <Button variant="primary" size="sm" className="gap-2">
-                <BookOpen className="h-4 w-4" />
-                전자책 보러가기
-              </Button>
-            </Link>
           </div>
 
           {/* Mobile Menu Button */}

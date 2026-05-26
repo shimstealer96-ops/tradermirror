@@ -1,90 +1,110 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { TrendingUp, ChevronRight, ChevronLeft, Calculator } from 'lucide-react'
+import { TrendingUp, ChevronDown, ChevronUp } from 'lucide-react'
 import LimitModal from '@/components/LimitModal'
 import { useDailyLimits } from '@/hooks/useDailyLimits'
 import { useUserPlan } from '@/hooks/useUserPlan'
 import { DEFAULT_PLAN_CONFIG, isProOrTrial } from '@/lib/planConfig'
 
 // ─────────────────────────────────────────
-// 상수 정의
+// 상수
 // ─────────────────────────────────────────
 const ASSET_TYPES = [
-  { key: 'stock_spot',      label: '주식 현물', emoji: '📈', desc: '국내·미국 주식, ETF' },
-  { key: 'stock_futures',   label: '주식 선물', emoji: '📊', desc: '코스피200, 나스닥100 선물' },
-  { key: 'crypto_spot',     label: '코인 현물', emoji: '🪙', desc: '업비트, 바이낸스 현물' },
-  { key: 'crypto_futures',  label: '코인 선물', emoji: '⚡', desc: '바이낸스, 바이비트 선물' },
+  { key: 'stock_spot',     label: '주식 현물', emoji: '📈', desc: '국내·미국 주식, ETF' },
+  { key: 'stock_futures',  label: '주식 선물', emoji: '📊', desc: '코스피200, 나스닥100 선물' },
+  { key: 'crypto_spot',    label: '코인 현물', emoji: '🪙', desc: '업비트, 바이낸스 현물' },
+  { key: 'crypto_futures', label: '코인 선물', emoji: '⚡', desc: '바이낸스, 바이비트 선물' },
 ]
 
 const ENTRY_REASONS = [
-  { key: 'order_block',     label: '오더블록' },
-  { key: 'fvg',             label: 'FVG' },
-  { key: 'sr_flip',         label: 'SR플립' },
-  { key: 'moving_average',  label: '이동평균선' },
-  { key: 'rsi',             label: 'RSI' },
-  { key: 'volume',          label: '거래량' },
-  { key: 'supply_demand',   label: '수급' },
-  { key: 'earnings',        label: '실적' },
-  { key: 'news',            label: '뉴스' },
-  { key: 'macro',           label: '매크로' },
-  { key: 'community',       label: '커뮤니티' },
-  { key: 'gut_feeling',     label: '단순 감' },
+  { key: 'order_block',    label: '지지/저항' },
+  { key: 'fvg',            label: '가격 공백' },
+  { key: 'sr_flip',        label: '추세 전환' },
+  { key: 'moving_average', label: '이동평균선' },
+  { key: 'rsi',            label: 'RSI' },
+  { key: 'volume',         label: '거래량' },
+  { key: 'supply_demand',  label: '기관/외국인 수급' },
+  { key: 'earnings',       label: '실적' },
+  { key: 'news',           label: '뉴스' },
+  { key: 'macro',          label: '매크로' },
+  { key: 'community',      label: '커뮤니티' },
+  { key: 'gut_feeling',    label: '감(직관)' },
 ]
 
 const EMOTIONS = [
-  { key: 'calm',      label: '차분함', color: 'emerald' },
-  { key: 'anxious',   label: '불안',   color: 'yellow' },
-  { key: 'confident', label: '확신',   color: 'blue' },
-  { key: 'impatient', label: '조급함', color: 'orange' },
-  { key: 'fomo',      label: 'FOMO',   color: 'red' },
-  { key: 'revenge',   label: '복수심', color: 'red' },
-  { key: 'bored',     label: '지루함', color: 'slate' },
-  { key: 'impulsive', label: '충동',   color: 'red' },
+  { key: 'calm',      label: '차분함', color: 'bg-emerald-600' },
+  { key: 'anxious',   label: '불안',   color: 'bg-yellow-600' },
+  { key: 'confident', label: '확신',   color: 'bg-blue-600' },
+  { key: 'impatient', label: '조급함', color: 'bg-orange-600' },
+  { key: 'fomo',      label: 'FOMO',   color: 'bg-red-600' },
+  { key: 'revenge',   label: '복수심', color: 'bg-red-700' },
+  { key: 'bored',     label: '지루함', color: 'bg-slate-600' },
+  { key: 'impulsive', label: '충동',   color: 'bg-red-500' },
 ]
 
-const EXIT_REASONS = [
-  { key: 'target_reached',  label: '목표가 도달' },
-  { key: 'stop_loss_hit',   label: '손절선 이탈' },
-  { key: 'indicator_change',label: '지표 변화' },
-  { key: 'volume_drop',     label: '거래량 감소' },
-  { key: 'panic_sell',      label: '급락 공포' },
-  { key: 'profit_fear',     label: '수익 반납 두려움' },
-  { key: 'impulsive_sell',  label: '충동 매도' },
-  { key: 'no_plan',         label: '계획 없음' },
-]
-
-const SECTIONS = ['기본 정보', '진입/청산', '리스크', '시장 상황', '감정/복기']
-
 // ─────────────────────────────────────────
-// 헬퍼
+// 헬퍼 컴포넌트
 // ─────────────────────────────────────────
-const inputCls = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm'
-const labelCls = 'block text-xs font-medium text-slate-400 mb-1'
-const requiredStar = <span className="text-red-400 ml-0.5">*</span>
+const inputCls = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm'
+const labelCls = 'block text-xs font-medium text-slate-400 mb-1.5'
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className={labelCls}>{label}{required && requiredStar}</label>
+      <label className={labelCls}>{label}{required && <span className="text-red-400 ml-0.5">*</span>}</label>
       {children}
     </div>
   )
 }
 
-function SelectField({ label, required, value, onChange, options }: {
-  label: string; required?: boolean; value: string;
-  onChange: (v: string) => void; options: { key: string; label: string }[]
+function TagButtons({ options, value, onChange }: {
+  options: { key: string; label: string; color?: string }[]
+  value: string
+  onChange: (v: string) => void
 }) {
   return (
-    <Field label={label} required={required}>
-      <select value={value} onChange={e => onChange(e.target.value)} className={inputCls}>
-        <option value="">선택</option>
-        {options.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-      </select>
-    </Field>
+    <div className="flex flex-wrap gap-2">
+      {options.map(o => (
+        <button
+          key={o.key}
+          type="button"
+          onClick={() => onChange(value === o.key ? '' : o.key)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            value === o.key
+              ? (o.color ? `${o.color} text-white` : 'bg-blue-600 text-white')
+              : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function PnLDisplay({ pnl, pnlRate }: { pnl: number | null; pnlRate: number | null }) {
+  if (pnl === null || pnlRate === null) return null
+  const isProfit = pnl >= 0
+  return (
+    <div className={`rounded-xl px-4 py-3 flex items-center justify-between ${isProfit ? 'bg-emerald-950/40 border border-emerald-500/30' : 'bg-red-950/40 border border-red-500/30'}`}>
+      <span className="text-xs text-slate-400">실시간 손익</span>
+      <span className={`text-sm font-black ${isProfit ? 'text-emerald-400' : 'text-red-400'}`}>
+        {isProfit ? '+' : ''}{pnlRate.toFixed(2)}% / {isProfit ? '+' : ''}₩{Math.round(pnl).toLocaleString()}
+      </span>
+    </div>
+  )
+}
+
+function LiquidationDisplay({ price }: { price: number | null }) {
+  if (!price) return null
+  return (
+    <div className="bg-red-950/30 border border-red-500/30 rounded-xl px-4 py-3 flex items-center justify-between">
+      <span className="text-xs text-slate-400">⚠️ 예상 강제청산가</span>
+      <span className="text-sm font-black text-red-400">₩{Math.round(price).toLocaleString()}</span>
+    </div>
   )
 }
 
@@ -95,143 +115,129 @@ export default function NewTradePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [assetType, setAssetType] = useState('')
-  const [section, setSection] = useState(0)
+  const [showDetail, setShowDetail] = useState(false)
   const [showLimitModal, setShowLimitModal] = useState(false)
 
-  // 플랜/한도 훅
   const { plan, loading: planLoading } = useUserPlan()
   const { journalCountToday, loading: limitsLoading } = useDailyLimits()
 
   // ── 공통 필드
-  const [common, setCommon] = useState({
-    trade_date: new Date().toISOString().split('T')[0],
-    asset_name: '', ticker: '', trade_type: '', stop_loss_basis: '',
-    target_price: '', emotion_before: '', exit_reason: '',
-    principle_followed: '', good_points: '', mistakes: '',
-    improvements: '', score: '', review_summary: '',
-    currency: 'KRW', exchange_rate: '1', status: 'open',
-    entry_reason: [] as string[],
-  })
+  const [tradeDate, setTradeDate] = useState(new Date().toISOString().split('T')[0])
+  const [entryReason, setEntryReason] = useState('')
+  const [emotion, setEmotion] = useState('')
+  const [score, setScore] = useState(5)
+  const [stopLoss, setStopLoss] = useState('')
+  const [targetPrice, setTargetPrice] = useState('')
+  const [principleFollowed, setPrincipleFollowed] = useState('')
+  const [specialNote, setSpecialNote] = useState('')   // 특이사항 메모 (시장상황 통합)
+  const [oneLineMemo, setOneLineMemo] = useState('')   // 한 줄 복기
+  const [memo, setMemo] = useState('')                  // 자유 메모 (잘한점/실수/개선점 통합)
 
-  // ── 코인 선물 필드
-  const [cf, setCf] = useState({
-    exchange_name: '', coin_symbol: '',
-    position_direction: 'long', margin_mode: 'isolated',
-    leverage: '', entry_datetime: '', exit_datetime: '',
-    input_method: 'by_margin',
-    margin: '', position_quantity: '',
-    entry_price: '', exit_price: '',
-    liquidation_price: '', funding_fee: '', fee: '',
-    btc_direction: '', btc_dominance: '', volatility: '',
-    entry_session: '', news_event: '', overtrading: '',
-    stop_loss_method: '',
-  })
+  // ── 주식 현물
+  const [ssName, setSsName]       = useState('')
+  const [ssBuyPrice, setSsBuyPrice] = useState('')
+  const [ssSellPrice, setSsSellPrice] = useState('')
+  const [ssQty, setSsQty]         = useState('')
+  const [ssBuyDt, setSsBuyDt]     = useState('')
+  const [ssSellDt, setSsSellDt]   = useState('')
+  const [ssFee, setSsFee]         = useState('')
+  const [ssTax, setSsTax]         = useState('')
 
-  // ── 주식 현물 필드
-  const [ss, setSs] = useState({
-    market_type: '', exchange: '', sector: '',
-    entry_datetime: '', exit_datetime: '',
-    quantity: '', entry_price: '', exit_price: '',
-    fee: '', tax: '', trade_session: '',
-    check_foreign_flow: false, check_institutional_flow: false, check_retail_flow: false,
-    has_earnings: false, has_disclosure: false,
-    macro_issue: '', investment_period: '', has_dividend: false,
-  })
+  // ── 코인 선물
+  const [cfSymbol, setCfSymbol]   = useState('')
+  const [cfDir, setCfDir]         = useState<'long'|'short'>('long')
+  const [cfLev, setCfLev]         = useState('')
+  const [cfEntry, setCfEntry]     = useState('')
+  const [cfExit, setCfExit]       = useState('')
+  const [cfEntryDt, setCfEntryDt] = useState('')
+  const [cfExitDt, setCfExitDt]   = useState('')
+  const [cfMarginMode, setCfMarginMode] = useState<'isolated'|'cross'>('isolated')
+  const [cfMargin, setCfMargin]   = useState('')
+  const [cfFunding, setCfFunding] = useState('')
+  const [cfFee, setCfFee]         = useState('')
 
-  // ── 주식 선물 필드
-  const [sf, setSf] = useState({
-    futures_type: '', underlying_asset: '', contract_name: '',
-    direction: 'long', contract_count: '', contract_multiplier: '',
-    margin: '', leverage: '', entry_datetime: '', exit_datetime: '',
-    entry_price: '', exit_price: '', expiry_date: '',
-    is_rollover: false, liquidation_risk_memo: '', fee: '', tax: '',
-    market_direction: '', volatility: '', major_event: '', trade_session: '',
-  })
+  // ── 주식 선물
+  const [sfName, setSfName]       = useState('')
+  const [sfDir, setSfDir]         = useState<'long'|'short'>('long')
+  const [sfLev, setSfLev]         = useState('')
+  const [sfEntry, setSfEntry]     = useState('')
+  const [sfExit, setSfExit]       = useState('')
+  const [sfContracts, setSfContracts] = useState('')
+  const [sfMultiplier, setSfMultiplier] = useState('')
+  const [sfEntryDt, setSfEntryDt] = useState('')
+  const [sfExitDt, setSfExitDt]   = useState('')
+  const [sfMargin, setSfMargin]   = useState('')
+  const [sfFee, setSfFee]         = useState('')
 
-  // ── 코인 현물 필드
-  const [cs, setCs] = useState({
-    exchange_name: '', coin_symbol: '', market_pair: 'KRW',
-    input_method: 'by_amount',
-    entry_datetime: '', exit_datetime: '',
-    invest_amount: '', coin_quantity: '',
-    avg_buy_price: '', avg_sell_price: '',
-    fee: '', btc_direction: '', btc_dominance: '',
-    coin_category: '', volatility: '', entry_session: '',
-    news_event: '', overtrading: '',
-  })
+  // ── 코인 현물
+  const [csSymbol, setCsSymbol]   = useState('')
+  const [csBuyPrice, setCsBuyPrice] = useState('')
+  const [csSellPrice, setCsSellPrice] = useState('')
+  const [csInputMethod, setCsInputMethod] = useState<'by_amount'|'by_quantity'>('by_amount')
+  const [csAmount, setCsAmount]   = useState('')
+  const [csQty, setCsQty]         = useState('')
+  const [csEntryDt, setCsEntryDt] = useState('')
+  const [csExitDt, setCsExitDt]   = useState('')
+  const [csFee, setCsFee]         = useState('')
 
   // ─────────────────────────────────────
   // 자동 계산
   // ─────────────────────────────────────
-  const calcCF = () => {
-    const ep = Number(cf.entry_price), xp = Number(cf.exit_price)
-    const fee = Number(cf.fee) || 0, ff = Number(cf.funding_fee) || 0
-    const lev = Number(cf.leverage) || 1
-    let qty = 0, margin = 0, posSize = 0
-
-    if (cf.input_method === 'by_margin') {
-      margin = Number(cf.margin) || 0
-      posSize = margin * lev
-      qty = ep > 0 ? posSize / ep : 0
-    } else {
-      qty = Number(cf.position_quantity) || 0
-      posSize = ep * qty
-      margin = lev > 0 ? posSize / lev : 0
-    }
-
-    if (!ep || !xp || !qty) return null
-    const raw = cf.position_direction === 'long'
-      ? (xp - ep) * qty : (ep - xp) * qty
-    const pl = raw - fee - ff
-    const plRate = margin > 0 ? (pl / margin) * 100 : 0
-    const plKrw = common.currency !== 'KRW' ? pl * Number(common.exchange_rate) : pl
-    return { pl, plRate, plKrw, qty: qty.toFixed(6), posSize: posSize.toFixed(2), margin: margin.toFixed(2) }
+  const calcSS = () => {
+    const ep = Number(ssBuyPrice), xp = Number(ssSellPrice)
+    const qty = Number(ssQty), fee = Number(ssFee) || 0, tax = Number(ssTax) || 0
+    if (!ep || !qty || !xp) return { pnl: null, pnlRate: null }
+    const buy = ep * qty, sell = xp * qty
+    const pnl = sell - buy - fee - tax
+    const pnlRate = (pnl / buy) * 100
+    return { pnl, pnlRate }
   }
 
-  const calcSS = () => {
-    const ep = Number(ss.entry_price), xp = Number(ss.exit_price)
-    const qty = Number(ss.quantity), fee = Number(ss.fee) || 0, tax = Number(ss.tax) || 0
-    if (!ep || !qty) return null
-    const buyAmt = ep * qty
-    const sellAmt = xp > 0 ? xp * qty : 0
-    const pl = xp > 0 ? sellAmt - buyAmt - fee - tax : null
-    const plRate = pl != null && buyAmt > 0 ? (pl / buyAmt) * 100 : null
-    return { buyAmt, sellAmt, pl, plRate }
+  const calcCF = () => {
+    const ep = Number(cfEntry), xp = Number(cfExit), lev = Number(cfLev) || 1
+    const fee = Number(cfFee) || 0, funding = Number(cfFunding) || 0
+    const margin = Number(cfMargin) || 0
+    if (!ep || !xp || !lev) return { pnl: null, pnlRate: null, liqPrice: null }
+    const qty = margin > 0 ? (margin * lev) / ep : 1
+    const raw = cfDir === 'long' ? (xp - ep) * qty : (ep - xp) * qty
+    const pnl = raw - fee - funding
+    const pnlRate = margin > 0 ? (pnl / margin) * 100 : ((xp - ep) / ep) * lev * (cfDir === 'long' ? 1 : -1) * 100
+    const liqPrice = ep > 0 && lev > 0
+      ? cfDir === 'long'
+        ? ep * (1 - 1 / lev + 0.004)
+        : ep * (1 + 1 / lev - 0.004)
+      : null
+    return { pnl, pnlRate, liqPrice }
   }
 
   const calcSF = () => {
-    const ep = Number(sf.entry_price), xp = Number(sf.exit_price)
-    const cnt = Number(sf.contract_count), mul = Number(sf.contract_multiplier) || 1
-    const margin = Number(sf.margin), fee = Number(sf.fee) || 0, tax = Number(sf.tax) || 0
-    if (!ep || !xp || !cnt) return null
-    const raw = sf.direction === 'long' ? (xp - ep) * cnt * mul : (ep - xp) * cnt * mul
-    const pl = raw - fee - tax
-    const roe = margin > 0 ? (pl / margin) * 100 : 0
-    return { pl, roe }
+    const ep = Number(sfEntry), xp = Number(sfExit)
+    const cnt = Number(sfContracts), mul = Number(sfMultiplier) || 1
+    const margin = Number(sfMargin) || 0, fee = Number(sfFee) || 0
+    const lev = Number(sfLev) || 1
+    if (!ep || !xp || !cnt) return { pnl: null, pnlRate: null, liqPrice: null }
+    const raw = sfDir === 'long' ? (xp - ep) * cnt * mul : (ep - xp) * cnt * mul
+    const pnl = raw - fee
+    const pnlRate = margin > 0 ? (pnl / margin) * 100 : null
+    const liqPrice = ep > 0 && lev > 0
+      ? sfDir === 'long'
+        ? ep * (1 - 1 / lev + 0.004)
+        : ep * (1 + 1 / lev - 0.004)
+      : null
+    return { pnl, pnlRate, liqPrice }
   }
 
   const calcCS = () => {
-    const buyP = Number(cs.avg_buy_price), sellP = Number(cs.avg_sell_price)
-    const fee = Number(cs.fee) || 0
-    let qty = 0, investAmt = 0
-    if (cs.input_method === 'by_amount') {
-      investAmt = Number(cs.invest_amount) || 0
-      qty = buyP > 0 ? investAmt / buyP : 0
-    } else {
-      qty = Number(cs.coin_quantity) || 0
-      investAmt = buyP * qty
-    }
-    if (!buyP || !qty) return null
-    const sellAmt = sellP > 0 ? sellP * qty : 0
-    const pl = sellP > 0 ? sellAmt - investAmt - fee : null
-    const plRate = pl != null && investAmt > 0 ? (pl / investAmt) * 100 : null
-    return { qty: qty.toFixed(8), investAmt, sellAmt, pl, plRate }
+    const bp = Number(csBuyPrice), sp = Number(csSellPrice)
+    const fee = Number(csFee) || 0
+    if (!bp || !sp) return { pnl: null, pnlRate: null }
+    const qty = csInputMethod === 'by_amount' ? (Number(csAmount) || 0) / bp : (Number(csQty) || 0)
+    if (!qty) return { pnl: null, pnlRate: null }
+    const investAmt = bp * qty
+    const pnl = (sp - bp) * qty - fee
+    const pnlRate = investAmt > 0 ? (pnl / investAmt) * 100 : null
+    return { pnl, pnlRate }
   }
-
-  const cfCalc = assetType === 'crypto_futures' ? calcCF() : null
-  const ssCalc = assetType === 'stock_spot' ? calcSS() : null
-  const sfCalc = assetType === 'stock_futures' ? calcSF() : null
-  const csCalc = assetType === 'crypto_spot' ? calcCS() : null
 
   // ─────────────────────────────────────
   // 제출
@@ -240,7 +246,6 @@ export default function NewTradePage() {
     e.preventDefault()
     if (!assetType) { alert('자산 유형을 선택해주세요.'); return }
 
-    // Free 플랜 일지 한도 체크
     if (!isProOrTrial(plan) && journalCountToday >= DEFAULT_PLAN_CONFIG.free_daily_journal_limit) {
       setShowLimitModal(true)
       return
@@ -251,182 +256,165 @@ export default function NewTradePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
-    const payload: any = {
+    let pnl: number | null = null
+    let pnlRate: number | null = null
+
+    const payload: Record<string, unknown> = {
       user_id: user.id,
       asset_type: assetType,
-      trade_date: common.trade_date,
-      asset_name: common.asset_name,
-      ticker: common.ticker.toUpperCase(),
-      trade_type: common.trade_type || null,
-      entry_reason: common.entry_reason.length ? common.entry_reason : null,
-      stop_loss_basis: common.stop_loss_basis || null,
-      target_price: common.target_price ? Number(common.target_price) : null,
-      emotion_before: common.emotion_before || null,
-      exit_reason: common.exit_reason || null,
-      principle_followed: common.principle_followed || null,
-      good_points: common.good_points || null,
-      mistakes: common.mistakes || null,
-      improvements: common.improvements || null,
-      score: common.score ? Number(common.score) : null,
-      review_summary: common.review_summary || null,
-      currency: common.currency,
-      exchange_rate: Number(common.exchange_rate) || 1,
-      status: common.status,
-    }
-
-    if (assetType === 'crypto_futures') {
-      const calc = cfCalc
-      Object.assign(payload, {
-        exchange_name: cf.exchange_name || null,
-        coin_symbol: cf.coin_symbol || null,
-        position_direction: cf.position_direction,
-        margin_mode: cf.margin_mode,
-        leverage: cf.leverage ? Number(cf.leverage) : null,
-        entry_datetime: cf.entry_datetime || null,
-        exit_datetime: cf.exit_datetime || null,
-        entry_price: cf.entry_price ? Number(cf.entry_price) : null,
-        exit_price: cf.exit_price ? Number(cf.exit_price) : null,
-        margin: calc ? Number(calc.margin) : (cf.margin ? Number(cf.margin) : null),
-        position_size: calc ? Number(calc.posSize) : null,
-        position_quantity: calc ? Number(calc.qty) : (cf.position_quantity ? Number(cf.position_quantity) : null),
-        liquidation_price: cf.liquidation_price ? Number(cf.liquidation_price) : null,
-        funding_fee: cf.funding_fee ? Number(cf.funding_fee) : null,
-        fee: cf.fee ? Number(cf.fee) : 0,
-        profit_loss: calc ? calc.pl : null,
-        profit_loss_rate: calc ? calc.plRate : null,
-        profit_loss_krw: calc ? calc.plKrw : null,
-        roe: calc ? calc.plRate : null,
-        btc_direction: cf.btc_direction || null,
-        btc_dominance: cf.btc_dominance ? Number(cf.btc_dominance) : null,
-        volatility: cf.volatility || null,
-        entry_session: cf.entry_session || null,
-        news_event: cf.news_event || null,
-        overtrading: cf.overtrading || null,
-      })
+      trade_date: tradeDate,
+      entry_reason: entryReason ? [entryReason] : null,
+      emotion_before: emotion || null,
+      score: score || null,
+      stop_loss_basis: stopLoss || null,
+      target_price: targetPrice ? Number(targetPrice) : null,
+      principle_followed: principleFollowed || null,
+      review_summary: [specialNote, oneLineMemo, memo].filter(Boolean).join('\n\n') || null,
+      good_points: null,
+      mistakes: null,
+      improvements: null,
+      currency: 'KRW',
+      exchange_rate: 1,
+      status: 'closed',
     }
 
     if (assetType === 'stock_spot') {
-      const calc = ssCalc
+      const calc = calcSS()
+      pnl = calc.pnl; pnlRate = calc.pnlRate
       Object.assign(payload, {
-        market_type: ss.market_type || null,
-        exchange: ss.exchange || null,
-        sector: ss.sector || null,
-        entry_datetime: ss.entry_datetime || null,
-        exit_datetime: ss.exit_datetime || null,
-        quantity: ss.quantity ? Number(ss.quantity) : null,
-        entry_price: ss.entry_price ? Number(ss.entry_price) : null,
-        exit_price: ss.exit_price ? Number(ss.exit_price) : null,
-        total_buy_amount: calc ? calc.buyAmt : null,
-        total_sell_amount: calc ? calc.sellAmt : null,
-        fee: ss.fee ? Number(ss.fee) : 0,
-        tax: ss.tax ? Number(ss.tax) : 0,
-        profit_loss: calc ? calc.pl : null,
-        profit_loss_rate: calc ? calc.plRate : null,
-        trade_session: ss.trade_session || null,
-        check_foreign_flow: ss.check_foreign_flow,
-        check_institutional_flow: ss.check_institutional_flow,
-        check_retail_flow: ss.check_retail_flow,
-        has_earnings: ss.has_earnings,
-        has_disclosure: ss.has_disclosure,
-        macro_issue: ss.macro_issue || null,
-        investment_period: ss.investment_period || null,
-        has_dividend: ss.has_dividend,
+        asset_name: ssName,
+        entry_price: Number(ssBuyPrice) || null,
+        exit_price: Number(ssSellPrice) || null,
+        quantity: Number(ssQty) || null,
+        entry_datetime: ssBuyDt || null,
+        exit_datetime: ssSellDt || null,
+        fee: Number(ssFee) || null,
+        tax: Number(ssTax) || null,
+        profit_loss: pnl,
+        profit_loss_rate: pnlRate,
+        position_direction: null,
+        leverage: null,
       })
-    }
-
-    if (assetType === 'stock_futures') {
-      const calc = sfCalc
+    } else if (assetType === 'crypto_futures') {
+      const calc = calcCF()
+      pnl = calc.pnl; pnlRate = calc.pnlRate
       Object.assign(payload, {
-        futures_type: sf.futures_type || null,
-        underlying_asset: sf.underlying_asset || null,
-        contract_name: sf.contract_name || null,
-        direction: sf.direction,
-        contract_count: sf.contract_count ? Number(sf.contract_count) : null,
-        contract_multiplier: sf.contract_multiplier ? Number(sf.contract_multiplier) : null,
-        margin: sf.margin ? Number(sf.margin) : null,
-        leverage: sf.leverage ? Number(sf.leverage) : null,
-        entry_datetime: sf.entry_datetime || null,
-        exit_datetime: sf.exit_datetime || null,
-        entry_price: sf.entry_price ? Number(sf.entry_price) : null,
-        exit_price: sf.exit_price ? Number(sf.exit_price) : null,
-        expiry_date: sf.expiry_date || null,
-        is_rollover: sf.is_rollover,
-        liquidation_risk_memo: sf.liquidation_risk_memo || null,
-        fee: sf.fee ? Number(sf.fee) : 0,
-        tax: sf.tax ? Number(sf.tax) : 0,
-        profit_loss: calc ? calc.pl : null,
-        roe: calc ? calc.roe : null,
-        market_direction: sf.market_direction || null,
-        volatility: sf.volatility || null,
-        major_event: sf.major_event || null,
-        trade_session: sf.trade_session || null,
+        asset_name: cfSymbol,
+        position_direction: cfDir,
+        leverage: Number(cfLev) || null,
+        entry_price: Number(cfEntry) || null,
+        exit_price: Number(cfExit) || null,
+        entry_datetime: cfEntryDt || null,
+        exit_datetime: cfExitDt || null,
+        margin_mode: cfMarginMode,
+        margin: Number(cfMargin) || null,
+        funding_fee: Number(cfFunding) || null,
+        fee: Number(cfFee) || null,
+        profit_loss: pnl,
+        profit_loss_rate: pnlRate,
+        quantity: null,
+        tax: null,
       })
-    }
-
-    if (assetType === 'crypto_spot') {
-      const calc = csCalc
+    } else if (assetType === 'stock_futures') {
+      const calc = calcSF()
+      pnl = calc.pnl; pnlRate = calc.pnlRate
       Object.assign(payload, {
-        exchange_name: cs.exchange_name || null,
-        coin_symbol: cs.coin_symbol || null,
-        market_pair: cs.market_pair || null,
-        input_method: cs.input_method,
-        entry_datetime: cs.entry_datetime || null,
-        exit_datetime: cs.exit_datetime || null,
-        invest_amount: calc ? calc.investAmt : (cs.invest_amount ? Number(cs.invest_amount) : null),
-        coin_quantity: calc ? Number(calc.qty) : (cs.coin_quantity ? Number(cs.coin_quantity) : null),
-        avg_buy_price: cs.avg_buy_price ? Number(cs.avg_buy_price) : null,
-        avg_sell_price: cs.avg_sell_price ? Number(cs.avg_sell_price) : null,
-        total_sell_amount_coin: calc ? calc.sellAmt : null,
-        fee: cs.fee ? Number(cs.fee) : 0,
-        profit_loss: calc ? calc.pl : null,
-        profit_loss_rate: calc ? calc.plRate : null,
-        btc_direction: cs.btc_direction || null,
-        btc_dominance: cs.btc_dominance ? Number(cs.btc_dominance) : null,
-        coin_category: cs.coin_category || null,
-        volatility: cs.volatility || null,
-        entry_session: cs.entry_session || null,
-        news_event: cs.news_event || null,
-        overtrading: cs.overtrading || null,
+        asset_name: sfName,
+        position_direction: sfDir,
+        leverage: Number(sfLev) || null,
+        entry_price: Number(sfEntry) || null,
+        exit_price: Number(sfExit) || null,
+        contract_count: Number(sfContracts) || null,
+        contract_multiplier: Number(sfMultiplier) || null,
+        entry_datetime: sfEntryDt || null,
+        exit_datetime: sfExitDt || null,
+        margin: Number(sfMargin) || null,
+        fee: Number(sfFee) || null,
+        profit_loss: pnl,
+        profit_loss_rate: pnlRate,
+        quantity: null,
+        tax: null,
+        funding_fee: null,
+      })
+    } else if (assetType === 'crypto_spot') {
+      const calc = calcCS()
+      pnl = calc.pnl; pnlRate = calc.pnlRate
+      const qty = csInputMethod === 'by_amount'
+        ? (Number(csAmount) || 0) / (Number(csBuyPrice) || 1)
+        : Number(csQty) || null
+      Object.assign(payload, {
+        asset_name: csSymbol,
+        entry_price: Number(csBuyPrice) || null,
+        exit_price: Number(csSellPrice) || null,
+        quantity: qty,
+        entry_datetime: csEntryDt || null,
+        exit_datetime: csExitDt || null,
+        fee: Number(csFee) || null,
+        profit_loss: pnl,
+        profit_loss_rate: pnlRate,
+        position_direction: null,
+        leverage: null,
+        tax: null,
+        funding_fee: null,
       })
     }
 
     const { error } = await supabase.from('trades').insert(payload)
     setLoading(false)
-    if (!error) router.push('/journal')
-    else alert('저장 오류: ' + error.message)
+    if (error) { alert('저장 중 오류가 발생했습니다: ' + error.message); return }
+    router.push('/journal')
   }
 
-  const setC = (k: string) => (e: any) => setCommon(p => ({ ...p, [k]: e.target.value }))
-  const setCF = (k: string) => (e: any) => setCf(p => ({ ...p, [k]: e.target.value }))
-  const setSS = (k: string) => (e: any) => setSs(p => ({ ...p, [k]: e.target.value }))
-  const setSF = (k: string) => (e: any) => setSf(p => ({ ...p, [k]: e.target.value }))
-  const setCS = (k: string) => (e: any) => setCs(p => ({ ...p, [k]: e.target.value }))
-
-  const toggleReason = (k: string) => setCommon(p => ({
-    ...p,
-    entry_reason: p.entry_reason.includes(k)
-      ? p.entry_reason.filter(r => r !== k)
-      : [...p.entry_reason, k]
-  }))
-
-  const plColor = (v: number | null | undefined) =>
-    v == null ? 'text-slate-400' : v >= 0 ? 'text-emerald-400' : 'text-red-400'
-
-  const fmtNum = (v: number | null | undefined, decimals = 0) =>
-    v == null ? '-' : v.toLocaleString('ko-KR', { maximumFractionDigits: decimals })
+  // ─────────────────────────────────────
+  // 계산 결과
+  // ─────────────────────────────────────
+  const ssCalc = assetType === 'stock_spot' ? calcSS() : { pnl: null, pnlRate: null }
+  const cfCalc = assetType === 'crypto_futures' ? calcCF() : { pnl: null, pnlRate: null, liqPrice: null }
+  const sfCalc = assetType === 'stock_futures' ? calcSF() : { pnl: null, pnlRate: null, liqPrice: null }
+  const csCalc = assetType === 'crypto_spot' ? calcCS() : { pnl: null, pnlRate: null }
 
   // ─────────────────────────────────────
-  // 렌더
+  // 공통 2단계 상세 섹션
   // ─────────────────────────────────────
+  const DetailSection = ({ showEntryReason = true }: { showEntryReason?: boolean }) => (
+    <div className="space-y-5">
+      {showEntryReason && (
+        <Field label="진입 근거">
+          <TagButtons options={ENTRY_REASONS} value={entryReason} onChange={setEntryReason} />
+        </Field>
+      )}
+      <Field label="손절 기준">
+        <input className={inputCls} placeholder="예: -3% 이탈 시 손절" value={stopLoss} onChange={e => setStopLoss(e.target.value)} />
+      </Field>
+      <Field label="목표가">
+        <input type="number" className={inputCls} placeholder="목표 매도가 (원)" value={targetPrice} onChange={e => setTargetPrice(e.target.value)} />
+      </Field>
+      <Field label="원칙 준수 여부">
+        <div className="flex gap-2">
+          {[{ v: 'yes', l: '✅ 지킴' }, { v: 'partial', l: '⚠️ 일부' }, { v: 'no', l: '❌ 안 지킴' }].map(o => (
+            <button key={o.v} type="button"
+              onClick={() => setPrincipleFollowed(principleFollowed === o.v ? '' : o.v)}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${principleFollowed === o.v ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+              {o.l}
+            </button>
+          ))}
+        </div>
+      </Field>
+      <Field label="특이사항 메모">
+        <textarea className={`${inputCls} resize-none`} rows={2} placeholder="시장 특이사항, 뉴스, 매크로 이벤트 등" value={specialNote} onChange={e => setSpecialNote(e.target.value)} />
+      </Field>
+      <Field label="한 줄 복기">
+        <input className={inputCls} placeholder="이 거래에서 한 줄로 배운 점" value={oneLineMemo} onChange={e => setOneLineMemo(e.target.value)} />
+      </Field>
+      <Field label="메모">
+        <textarea className={`${inputCls} resize-none`} rows={3} placeholder="잘한 점, 실수, 개선할 점 자유 기록" value={memo} onChange={e => setMemo(e.target.value)} />
+      </Field>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100">
-
-      {/* 한도 초과 모달 */}
-      <LimitModal
-        isOpen={showLimitModal}
-        onClose={() => setShowLimitModal(false)}
-        type="journal"
-      />
+      <LimitModal isOpen={showLimitModal} onClose={() => setShowLimitModal(false)} type="journal" />
 
       <header className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -436,522 +424,316 @@ export default function NewTradePage() {
         <Link href="/journal" className="text-sm text-slate-400 hover:text-slate-200">← 일지 목록</Link>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">새 매매 기록</h1>
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        <h1 className="text-xl font-black text-slate-100 mb-6">새 매매 기록</h1>
 
         {/* 자산 유형 선택 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           {ASSET_TYPES.map(a => (
             <button key={a.key} type="button"
-              onClick={() => { setAssetType(a.key); setSection(0) }}
-              className={`p-4 rounded-xl border text-left transition-all ${
-                assetType === a.key
-                  ? 'bg-blue-600/20 border-blue-500 text-blue-300'
-                  : 'bg-slate-900/40 border-slate-700 text-slate-400 hover:border-slate-500'
-              }`}>
+              onClick={() => { setAssetType(a.key); setShowDetail(false) }}
+              className={`p-4 rounded-xl border text-left transition-all ${assetType === a.key ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 bg-slate-900/60 hover:border-slate-500'}`}>
               <div className="text-2xl mb-1">{a.emoji}</div>
-              <div className="font-semibold text-sm">{a.label}</div>
-              <div className="text-xs mt-1 opacity-70">{a.desc}</div>
+              <div className="font-bold text-sm text-slate-100">{a.label}</div>
+              <div className="text-xs text-slate-500 mt-0.5">{a.desc}</div>
             </button>
           ))}
         </div>
 
-        {!assetType && (
-          <div className="text-center py-16 text-slate-500">
-            위에서 자산 유형을 선택하세요
-          </div>
-        )}
-
         {assetType && (
-          <form onSubmit={handleSubmit}>
-            {/* 섹션 탭 */}
-            <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
-              {SECTIONS.map((s, i) => (
-                <button key={s} type="button" onClick={() => setSection(i)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                    section === i ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                  }`}>
-                  {i + 1}. {s}
-                </button>
-              ))}
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* ═══════════════════════════
-                섹션 0: 기본 정보
-            ═══════════════════════════ */}
-            {section === 0 && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="거래일" required>
-                    <input type="date" value={common.trade_date} onChange={setC('trade_date')} className={inputCls} required />
+            {/* ══════════════════════════════════
+                주식 현물 — 1단계
+            ══════════════════════════════════ */}
+            {assetType === 'stock_spot' && (
+              <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-6 space-y-4">
+                <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">필수 정보</p>
+                <Field label="종목명" required>
+                  <input className={inputCls} placeholder="예: 삼성전자" value={ssName} onChange={e => setSsName(e.target.value)} required />
+                </Field>
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label="매수가" required>
+                    <input type="number" className={inputCls} placeholder="원" value={ssBuyPrice} onChange={e => setSsBuyPrice(e.target.value)} required />
                   </Field>
-                  <SelectField label="상태" value={common.status} onChange={v => setCommon(p => ({...p, status: v}))}
-                    options={[{key:'open',label:'보유중'},{key:'closed',label:'청산완료'}]} />
+                  <Field label="매도가">
+                    <input type="number" className={inputCls} placeholder="원" value={ssSellPrice} onChange={e => setSsSellPrice(e.target.value)} />
+                  </Field>
+                  <Field label="수량" required>
+                    <input type="number" className={inputCls} placeholder="주" value={ssQty} onChange={e => setSsQty(e.target.value)} required />
+                  </Field>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="자산명" required>
-                    <input type="text" placeholder="삼성전자 / 비트코인" value={common.asset_name} onChange={setC('asset_name')} className={inputCls} required />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="매수일시">
+                    <input type="datetime-local" className={inputCls} value={ssBuyDt} onChange={e => setSsBuyDt(e.target.value)} />
                   </Field>
-                  <Field label="티커/심볼" required>
-                    <input type="text" placeholder="005930 / BTCUSDT" value={common.ticker} onChange={setC('ticker')} className={inputCls} required />
+                  <Field label="매도일시">
+                    <input type="datetime-local" className={inputCls} value={ssSellDt} onChange={e => setSsSellDt(e.target.value)} />
                   </Field>
                 </div>
-                <SelectField label="매매 유형" value={common.trade_type} onChange={v => setCommon(p=>({...p,trade_type:v}))}
-                  options={[
-                    {key:'scalping',label:'단타'},{key:'swing',label:'스윙'},{key:'long_term',label:'장기'},
-                    {key:'split_buy',label:'분할매수'},{key:'take_profit',label:'익절'},{key:'stop_loss',label:'손절'}
-                  ]} />
+                {ssCalc.pnl !== null && <PnLDisplay pnl={ssCalc.pnl} pnlRate={ssCalc.pnlRate} />}
+                <Field label="감정 상태">
+                  <TagButtons options={EMOTIONS} value={emotion} onChange={setEmotion} />
+                </Field>
+                <Field label={`매매 점수: ${score}점`}>
+                  <input type="range" min={1} max={10} value={score} onChange={e => setScore(Number(e.target.value))}
+                    className="w-full accent-blue-500" />
+                  <div className="flex justify-between text-xs text-slate-600 mt-1"><span>1</span><span>10</span></div>
+                </Field>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════
+                코인 선물 — 1단계
+            ══════════════════════════════════ */}
+            {assetType === 'crypto_futures' && (
+              <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-6 space-y-4">
+                <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">필수 정보</p>
+                <Field label="코인 심볼" required>
+                  <input className={inputCls} placeholder="예: BTCUSDT" value={cfSymbol} onChange={e => setCfSymbol(e.target.value.toUpperCase())} required />
+                </Field>
+                {/* 롱/숏 토글 */}
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setCfDir('long')}
+                    className={`flex-1 py-3 rounded-xl font-black text-sm transition-colors ${cfDir === 'long' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                    🟢 롱 (매수)
+                  </button>
+                  <button type="button" onClick={() => setCfDir('short')}
+                    className={`flex-1 py-3 rounded-xl font-black text-sm transition-colors ${cfDir === 'short' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                    🔴 숏 (매도)
+                  </button>
+                </div>
+                <Field label="레버리지" required>
+                  <input type="number" className={inputCls} placeholder="예: 10" value={cfLev} onChange={e => setCfLev(e.target.value)} required />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="진입가" required>
+                    <input type="number" className={inputCls} placeholder="USDT" value={cfEntry} onChange={e => setCfEntry(e.target.value)} required />
+                  </Field>
+                  <Field label="청산가">
+                    <input type="number" className={inputCls} placeholder="USDT" value={cfExit} onChange={e => setCfExit(e.target.value)} />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="진입일시">
+                    <input type="datetime-local" className={inputCls} value={cfEntryDt} onChange={e => setCfEntryDt(e.target.value)} />
+                  </Field>
+                  <Field label="청산일시">
+                    <input type="datetime-local" className={inputCls} value={cfExitDt} onChange={e => setCfExitDt(e.target.value)} />
+                  </Field>
+                </div>
+                {cfCalc.liqPrice !== null && <LiquidationDisplay price={cfCalc.liqPrice} />}
+                {cfCalc.pnl !== null && <PnLDisplay pnl={cfCalc.pnl} pnlRate={cfCalc.pnlRate} />}
+                <Field label="감정 상태">
+                  <TagButtons options={EMOTIONS} value={emotion} onChange={setEmotion} />
+                </Field>
+                <Field label={`매매 점수: ${score}점`}>
+                  <input type="range" min={1} max={10} value={score} onChange={e => setScore(Number(e.target.value))}
+                    className="w-full accent-blue-500" />
+                  <div className="flex justify-between text-xs text-slate-600 mt-1"><span>1</span><span>10</span></div>
+                </Field>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════
+                주식 선물 — 1단계
+            ══════════════════════════════════ */}
+            {assetType === 'stock_futures' && (
+              <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-6 space-y-4">
+                <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">필수 정보</p>
+                <Field label="계약명" required>
+                  <input className={inputCls} placeholder="예: 코스피200 선물" value={sfName} onChange={e => setSfName(e.target.value)} required />
+                </Field>
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setSfDir('long')}
+                    className={`flex-1 py-3 rounded-xl font-black text-sm transition-colors ${sfDir === 'long' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                    🟢 롱 (매수)
+                  </button>
+                  <button type="button" onClick={() => setSfDir('short')}
+                    className={`flex-1 py-3 rounded-xl font-black text-sm transition-colors ${sfDir === 'short' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                    🔴 숏 (매도)
+                  </button>
+                </div>
+                <Field label="레버리지">
+                  <input type="number" className={inputCls} placeholder="예: 5" value={sfLev} onChange={e => setSfLev(e.target.value)} />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="진입가" required>
+                    <input type="number" className={inputCls} placeholder="원" value={sfEntry} onChange={e => setSfEntry(e.target.value)} required />
+                  </Field>
+                  <Field label="청산가">
+                    <input type="number" className={inputCls} placeholder="원" value={sfExit} onChange={e => setSfExit(e.target.value)} />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="계약수">
+                    <input type="number" className={inputCls} placeholder="계약" value={sfContracts} onChange={e => setSfContracts(e.target.value)} />
+                  </Field>
+                  <Field label="계약 승수">
+                    <input type="number" className={inputCls} placeholder="예: 250000" value={sfMultiplier} onChange={e => setSfMultiplier(e.target.value)} />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="진입일시">
+                    <input type="datetime-local" className={inputCls} value={sfEntryDt} onChange={e => setSfEntryDt(e.target.value)} />
+                  </Field>
+                  <Field label="청산일시">
+                    <input type="datetime-local" className={inputCls} value={sfExitDt} onChange={e => setSfExitDt(e.target.value)} />
+                  </Field>
+                </div>
+                {(sfCalc as any).liqPrice !== null && <LiquidationDisplay price={(sfCalc as any).liqPrice} />}
+                {sfCalc.pnl !== null && <PnLDisplay pnl={sfCalc.pnl} pnlRate={sfCalc.pnlRate} />}
+                <Field label="감정 상태">
+                  <TagButtons options={EMOTIONS} value={emotion} onChange={setEmotion} />
+                </Field>
+                <Field label={`매매 점수: ${score}점`}>
+                  <input type="range" min={1} max={10} value={score} onChange={e => setScore(Number(e.target.value))}
+                    className="w-full accent-blue-500" />
+                  <div className="flex justify-between text-xs text-slate-600 mt-1"><span>1</span><span>10</span></div>
+                </Field>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════
+                코인 현물 — 1단계
+            ══════════════════════════════════ */}
+            {assetType === 'crypto_spot' && (
+              <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-6 space-y-4">
+                <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">필수 정보</p>
+                <Field label="코인 심볼" required>
+                  <input className={inputCls} placeholder="예: BTC" value={csSymbol} onChange={e => setCsSymbol(e.target.value.toUpperCase())} required />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="평균 매수가" required>
+                    <input type="number" className={inputCls} placeholder="원/USDT" value={csBuyPrice} onChange={e => setCsBuyPrice(e.target.value)} required />
+                  </Field>
+                  <Field label="평균 매도가">
+                    <input type="number" className={inputCls} placeholder="원/USDT" value={csSellPrice} onChange={e => setCsSellPrice(e.target.value)} />
+                  </Field>
+                </div>
+                {/* 수량/금액 선택 */}
                 <div>
-                  <label className={labelCls}>진입 근거 (복수 선택)</label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {ENTRY_REASONS.map(r => (
-                      <button key={r.key} type="button" onClick={() => toggleReason(r.key)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          common.entry_reason.includes(r.key)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                        }`}>
-                        {r.label}
+                  <div className="flex gap-2 mb-2">
+                    {[{ v: 'by_amount' as const, l: '투자금액으로 입력' }, { v: 'by_quantity' as const, l: '수량으로 입력' }].map(o => (
+                      <button key={o.v} type="button" onClick={() => setCsInputMethod(o.v)}
+                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${csInputMethod === o.v ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                        {o.l}
                       </button>
                     ))}
                   </div>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <SelectField label="수익 통화" value={common.currency} onChange={v => setCommon(p=>({...p,currency:v}))}
-                    options={[{key:'KRW',label:'KRW (₩)'},{key:'USD',label:'USD ($)'},{key:'USDT',label:'USDT'}]} />
-                  {common.currency !== 'KRW' && (
-                    <Field label="환율">
-                      <input type="number" step="any" placeholder="1350" value={common.exchange_rate} onChange={setC('exchange_rate')} className={inputCls} />
-                    </Field>
+                  {csInputMethod === 'by_amount' ? (
+                    <input type="number" className={inputCls} placeholder="투자 금액 (원/USDT)" value={csAmount} onChange={e => setCsAmount(e.target.value)} />
+                  ) : (
+                    <input type="number" className={inputCls} placeholder="코인 수량" value={csQty} onChange={e => setCsQty(e.target.value)} />
                   )}
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="진입일시">
+                    <input type="datetime-local" className={inputCls} value={csEntryDt} onChange={e => setCsEntryDt(e.target.value)} />
+                  </Field>
+                  <Field label="청산일시">
+                    <input type="datetime-local" className={inputCls} value={csExitDt} onChange={e => setCsExitDt(e.target.value)} />
+                  </Field>
+                </div>
+                {csCalc.pnl !== null && <PnLDisplay pnl={csCalc.pnl} pnlRate={csCalc.pnlRate} />}
+                <Field label="감정 상태">
+                  <TagButtons options={EMOTIONS} value={emotion} onChange={setEmotion} />
+                </Field>
+                <Field label={`매매 점수: ${score}점`}>
+                  <input type="range" min={1} max={10} value={score} onChange={e => setScore(Number(e.target.value))}
+                    className="w-full accent-blue-500" />
+                  <div className="flex justify-between text-xs text-slate-600 mt-1"><span>1</span><span>10</span></div>
+                </Field>
               </div>
             )}
 
-            {/* ═══════════════════════════
-                섹션 1: 진입/청산
-            ═══════════════════════════ */}
-            {section === 1 && (
-              <div className="space-y-4">
+            {/* ══════════════════════════════════
+                상세 기록 펼침 버튼
+            ══════════════════════════════════ */}
+            <button
+              type="button"
+              onClick={() => setShowDetail(!showDetail)}
+              className="w-full flex items-center justify-center gap-2 py-3 border border-slate-700 rounded-xl text-slate-400 hover:text-slate-200 hover:border-slate-500 transition-colors text-sm font-medium"
+            >
+              {showDetail ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showDetail ? '상세 정보 닫기' : '상세 기록하기 (선택)'}
+            </button>
 
-                {/* 코인 선물 */}
-                {assetType === 'crypto_futures' && (<>
-                  <div className="grid grid-cols-2 gap-4">
-                    <SelectField label="거래소" value={cf.exchange_name} onChange={v => setCf(p=>({...p,exchange_name:v}))}
-                      options={[{key:'binance',label:'바이낸스'},{key:'bybit',label:'바이비트'},{key:'okx',label:'OKX'},{key:'other',label:'기타'}]} />
-                    <Field label="심볼">
-                      <input type="text" placeholder="BTCUSDT" value={cf.coin_symbol} onChange={setCF('coin_symbol')} className={inputCls} />
-                    </Field>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelCls}>포지션 방향{requiredStar}</label>
+            {/* ══════════════════════════════════
+                2단계: 상세 정보 (펼침)
+            ══════════════════════════════════ */}
+            {showDetail && (
+              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 space-y-5 animate-fadeIn">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">상세 정보 (선택)</p>
+
+                {/* 자산별 상세 추가 항목 */}
+                {(assetType === 'crypto_futures') && (
+                  <>
+                    <div className="space-y-3">
+                      <p className="text-xs text-slate-500">증거금 설정</p>
                       <div className="flex gap-2">
-                        {[{v:'long',l:'롱'},{v:'short',l:'숏'}].map(o => (
-                          <button key={o.v} type="button" onClick={() => setCf(p=>({...p,position_direction:o.v}))}
-                            className={`flex-1 py-2 rounded-lg border text-sm font-bold transition-colors ${
-                              cf.position_direction === o.v
-                                ? o.v === 'long' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                                                 : 'bg-red-500/20 border-red-500 text-red-400'
-                                : 'border-slate-700 text-slate-500'
-                            }`}>{o.l}</button>
+                        {[{ v: 'isolated' as const, l: '격리 마진' }, { v: 'cross' as const, l: '교차 마진' }].map(o => (
+                          <button key={o.v} type="button" onClick={() => setCfMarginMode(o.v)}
+                            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${cfMarginMode === o.v ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                            {o.l}
+                          </button>
                         ))}
                       </div>
+                      <input type="number" className={inputCls} placeholder="증거금 (USDT)" value={cfMargin} onChange={e => setCfMargin(e.target.value)} />
                     </div>
-                    <div>
-                      <label className={labelCls}>증거금 모드</label>
-                      <div className="flex gap-2">
-                        {[{v:'isolated',l:'격리'},{v:'cross',l:'교차'}].map(o => (
-                          <button key={o.v} type="button" onClick={() => setCf(p=>({...p,margin_mode:o.v}))}
-                            className={`flex-1 py-2 rounded-lg border text-sm transition-colors ${
-                              cf.margin_mode === o.v ? 'bg-blue-600/20 border-blue-500 text-blue-300' : 'border-slate-700 text-slate-500'
-                            }`}>{o.l}</button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="진입 일시">
-                      <input type="datetime-local" value={cf.entry_datetime} onChange={setCF('entry_datetime')} className={inputCls} />
-                    </Field>
-                    <Field label="청산 일시">
-                      <input type="datetime-local" value={cf.exit_datetime} onChange={setCF('exit_datetime')} className={inputCls} />
-                    </Field>
-                  </div>
-                  <div>
-                    <label className={labelCls}>입력 방식</label>
-                    <div className="flex gap-2 mb-3">
-                      {[{v:'by_margin',l:'증거금 기준'},{v:'by_quantity',l:'수량 기준'}].map(o => (
-                        <button key={o.v} type="button" onClick={() => setCf(p=>({...p,input_method:o.v}))}
-                          className={`flex-1 py-2 rounded-lg border text-sm transition-colors ${
-                            cf.input_method === o.v ? 'bg-blue-600/20 border-blue-500 text-blue-300' : 'border-slate-700 text-slate-500'
-                          }`}>{o.l}</button>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      {cf.input_method === 'by_margin' ? (
-                        <Field label="증거금">
-                          <input type="number" step="any" placeholder="0" value={cf.margin} onChange={setCF('margin')} className={inputCls} />
-                        </Field>
-                      ) : (
-                        <Field label="포지션 수량">
-                          <input type="number" step="any" placeholder="0.001" value={cf.position_quantity} onChange={setCF('position_quantity')} className={inputCls} />
-                        </Field>
-                      )}
-                      <Field label="레버리지 배율">
-                        <input type="number" step="1" placeholder="10" value={cf.leverage} onChange={setCF('leverage')} className={inputCls} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="펀딩비">
+                        <input type="number" className={inputCls} placeholder="USDT" value={cfFunding} onChange={e => setCfFunding(e.target.value)} />
+                      </Field>
+                      <Field label="수수료">
+                        <input type="number" className={inputCls} placeholder="USDT" value={cfFee} onChange={e => setCfFee(e.target.value)} />
                       </Field>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="진입 가격" required>
-                      <input type="number" step="any" placeholder="0" value={cf.entry_price} onChange={setCF('entry_price')} className={inputCls} />
-                    </Field>
-                    <Field label="청산 가격">
-                      <input type="number" step="any" placeholder="미청산 시 비워두기" value={cf.exit_price} onChange={setCF('exit_price')} className={inputCls} />
-                    </Field>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <Field label="강제청산가">
-                      <input type="number" step="any" placeholder="0" value={cf.liquidation_price} onChange={setCF('liquidation_price')} className={inputCls} />
-                    </Field>
-                    <Field label="펀딩비">
-                      <input type="number" step="any" placeholder="0" value={cf.funding_fee} onChange={setCF('funding_fee')} className={inputCls} />
+                  </>
+                )}
+                {(assetType === 'stock_futures') && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="증거금">
+                      <input type="number" className={inputCls} placeholder="원" value={sfMargin} onChange={e => setSfMargin(e.target.value)} />
                     </Field>
                     <Field label="수수료">
-                      <input type="number" step="any" placeholder="0" value={cf.fee} onChange={setCF('fee')} className={inputCls} />
+                      <input type="number" className={inputCls} placeholder="원" value={sfFee} onChange={e => setSfFee(e.target.value)} />
                     </Field>
                   </div>
-
-                  {/* 실시간 계산 */}
-                  {cfCalc && (
-                    <div className={`p-4 rounded-xl border ${cfCalc.pl >= 0 ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Calculator className="h-4 w-4 text-slate-400" />
-                        <span className="text-xs text-slate-400 font-medium">실시간 계산</span>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                        <div>
-                          <div className="text-xs text-slate-500">포지션 크기</div>
-                          <div className="font-bold">{fmtNum(Number(cfCalc.posSize), 2)}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-slate-500">수량</div>
-                          <div className="font-bold">{cfCalc.qty}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-slate-500">증거금</div>
-                          <div className="font-bold">{fmtNum(Number(cfCalc.margin), 2)}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-slate-500">손익</div>
-                          <div className={`font-bold text-lg ${plColor(cfCalc.pl)}`}>
-                            {cfCalc.pl >= 0 ? '+' : ''}{fmtNum(cfCalc.pl, 2)}
-                            <span className="text-xs ml-1">({cfCalc.plRate >= 0 ? '+' : ''}{cfCalc.plRate.toFixed(2)}%)</span>
-                          </div>
-                        </div>
-                      </div>
-                      {common.currency !== 'KRW' && (
-                        <div className="mt-2 pt-2 border-t border-slate-700 text-xs text-slate-400">
-                          원화 환산: <span className={`font-bold ${plColor(cfCalc.plKrw)}`}>
-                            {cfCalc.plKrw >= 0 ? '+' : ''}₩{fmtNum(cfCalc.plKrw, 0)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>)}
-
-                {/* 주식 현물 */}
-                {assetType === 'stock_spot' && (<>
-                  <div className="grid grid-cols-2 gap-4">
-                    <SelectField label="시장 구분" value={ss.market_type} onChange={v => setSs(p=>({...p,market_type:v}))}
-                      options={[{key:'domestic',label:'국내주식'},{key:'us',label:'미국주식'},{key:'etf',label:'ETF'},{key:'dividend',label:'배당주'},{key:'theme',label:'테마주'}]} />
-                    <SelectField label="거래소" value={ss.exchange} onChange={v => setSs(p=>({...p,exchange:v}))}
-                      options={[{key:'kospi',label:'코스피'},{key:'kosdaq',label:'코스닥'},{key:'nasdaq',label:'나스닥'},{key:'nyse',label:'NYSE'},{key:'amex',label:'AMEX'}]} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="매수 일시"><input type="datetime-local" value={ss.entry_datetime} onChange={setSS('entry_datetime')} className={inputCls} /></Field>
-                    <Field label="매도 일시"><input type="datetime-local" value={ss.exit_datetime} onChange={setSS('exit_datetime')} className={inputCls} /></Field>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <Field label="매수 가격" required><input type="number" step="any" placeholder="0" value={ss.entry_price} onChange={setSS('entry_price')} className={inputCls} /></Field>
-                    <Field label="매도 가격"><input type="number" step="any" placeholder="0" value={ss.exit_price} onChange={setSS('exit_price')} className={inputCls} /></Field>
-                    <Field label="수량" required><input type="number" step="any" placeholder="0" value={ss.quantity} onChange={setSS('quantity')} className={inputCls} /></Field>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="수수료"><input type="number" step="any" placeholder="0" value={ss.fee} onChange={setSS('fee')} className={inputCls} /></Field>
-                    <Field label="세금"><input type="number" step="any" placeholder="0" value={ss.tax} onChange={setSS('tax')} className={inputCls} /></Field>
-                  </div>
-                  {ssCalc && ssCalc.pl != null && (
-                    <div className={`p-4 rounded-xl border ${ssCalc.pl >= 0 ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                        <div><div className="text-xs text-slate-500">총 매수금액</div><div className="font-bold">₩{fmtNum(ssCalc.buyAmt)}</div></div>
-                        <div><div className="text-xs text-slate-500">총 매도금액</div><div className="font-bold">₩{fmtNum(ssCalc.sellAmt)}</div></div>
-                        <div><div className="text-xs text-slate-500">순손익</div><div className={`font-bold text-lg ${plColor(ssCalc.pl)}`}>{ssCalc.pl >= 0?'+':''}₩{fmtNum(ssCalc.pl)}</div></div>
-                        <div><div className="text-xs text-slate-500">수익률</div><div className={`font-bold ${plColor(ssCalc.plRate)}`}>{ssCalc.plRate != null ? `${ssCalc.plRate >= 0?'+':''}${ssCalc.plRate.toFixed(2)}%` : '-'}</div></div>
-                      </div>
-                    </div>
-                  )}
-                </>)}
-
-                {/* 주식 선물 */}
-                {assetType === 'stock_futures' && (<>
-                  <div className="grid grid-cols-2 gap-4">
-                    <SelectField label="선물 종류" value={sf.futures_type} onChange={v => setSf(p=>({...p,futures_type:v}))}
-                      options={[{key:'kospi200',label:'코스피200 선물'},{key:'mini_kospi200',label:'미니 코스피200'},{key:'sp500',label:'S&P500 선물'},{key:'nasdaq100',label:'나스닥100 선물'},{key:'dow',label:'다우 선물'},{key:'individual',label:'개별주식선물'},{key:'other',label:'기타'}]} />
-                    <Field label="기초자산"><input type="text" placeholder="코스피200, 나스닥100..." value={sf.underlying_asset} onChange={setSF('underlying_asset')} className={inputCls} /></Field>
-                  </div>
-                  <div>
-                    <label className={labelCls}>포지션 방향</label>
-                    <div className="flex gap-2">
-                      {[{v:'long',l:'롱'},{v:'short',l:'숏'}].map(o => (
-                        <button key={o.v} type="button" onClick={() => setSf(p=>({...p,direction:o.v}))}
-                          className={`flex-1 py-2 rounded-lg border text-sm font-bold transition-colors ${sf.direction===o.v?(o.v==='long'?'bg-emerald-500/20 border-emerald-500 text-emerald-400':'bg-red-500/20 border-red-500 text-red-400'):'border-slate-700 text-slate-500'}`}>{o.l}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="진입 일시"><input type="datetime-local" value={sf.entry_datetime} onChange={setSF('entry_datetime')} className={inputCls} /></Field>
-                    <Field label="청산 일시"><input type="datetime-local" value={sf.exit_datetime} onChange={setSF('exit_datetime')} className={inputCls} /></Field>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="진입 가격"><input type="number" step="any" placeholder="0" value={sf.entry_price} onChange={setSF('entry_price')} className={inputCls} /></Field>
-                    <Field label="청산 가격"><input type="number" step="any" placeholder="0" value={sf.exit_price} onChange={setSF('exit_price')} className={inputCls} /></Field>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <Field label="계약 수"><input type="number" step="any" placeholder="1" value={sf.contract_count} onChange={setSF('contract_count')} className={inputCls} /></Field>
-                    <Field label="계약 승수"><input type="number" step="any" placeholder="250000" value={sf.contract_multiplier} onChange={setSF('contract_multiplier')} className={inputCls} /></Field>
-                    <Field label="증거금"><input type="number" step="any" placeholder="0" value={sf.margin} onChange={setSF('margin')} className={inputCls} /></Field>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <Field label="만기일"><input type="date" value={sf.expiry_date} onChange={setSF('expiry_date')} className={inputCls} /></Field>
-                    <Field label="수수료"><input type="number" step="any" placeholder="0" value={sf.fee} onChange={setSF('fee')} className={inputCls} /></Field>
-                    <Field label="세금"><input type="number" step="any" placeholder="0" value={sf.tax} onChange={setSF('tax')} className={inputCls} /></Field>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" id="rollover" checked={sf.is_rollover} onChange={e => setSf(p=>({...p,is_rollover:e.target.checked}))} className="w-4 h-4" />
-                    <label htmlFor="rollover" className="text-sm text-slate-400">롤오버 여부</label>
-                  </div>
-                  {sfCalc && (
-                    <div className={`p-4 rounded-xl border ${sfCalc.pl >= 0 ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div><div className="text-xs text-slate-500">순손익</div><div className={`font-bold text-lg ${plColor(sfCalc.pl)}`}>{sfCalc.pl>=0?'+':''}₩{fmtNum(sfCalc.pl)}</div></div>
-                        <div><div className="text-xs text-slate-500">ROE</div><div className={`font-bold ${plColor(sfCalc.roe)}`}>{sfCalc.roe>=0?'+':''}{sfCalc.roe.toFixed(2)}%</div></div>
-                      </div>
-                    </div>
-                  )}
-                </>)}
-
-                {/* 코인 현물 */}
-                {assetType === 'crypto_spot' && (<>
-                  <div className="grid grid-cols-2 gap-4">
-                    <SelectField label="거래소" value={cs.exchange_name} onChange={v => setCs(p=>({...p,exchange_name:v}))}
-                      options={[{key:'upbit',label:'업비트'},{key:'bithumb',label:'빗썸'},{key:'binance',label:'바이낸스'},{key:'bybit',label:'바이비트'},{key:'okx',label:'OKX'},{key:'other',label:'기타'}]} />
-                    <SelectField label="마켓" value={cs.market_pair} onChange={v => setCs(p=>({...p,market_pair:v}))}
-                      options={[{key:'KRW',label:'KRW'},{key:'USDT',label:'USDT'},{key:'USD',label:'USD'},{key:'BTC',label:'BTC'}]} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="매수 일시"><input type="datetime-local" value={cs.entry_datetime} onChange={setCS('entry_datetime')} className={inputCls} /></Field>
-                    <Field label="매도 일시"><input type="datetime-local" value={cs.exit_datetime} onChange={setCS('exit_datetime')} className={inputCls} /></Field>
-                  </div>
-                  <div>
-                    <label className={labelCls}>입력 방식</label>
-                    <div className="flex gap-2 mb-3">
-                      {[{v:'by_amount',l:'투자 원금 기준'},{v:'by_quantity',l:'코인 수량 기준'}].map(o => (
-                        <button key={o.v} type="button" onClick={() => setCs(p=>({...p,input_method:o.v}))}
-                          className={`flex-1 py-2 rounded-lg border text-sm transition-colors ${cs.input_method===o.v?'bg-blue-600/20 border-blue-500 text-blue-300':'border-slate-700 text-slate-500'}`}>{o.l}</button>
-                      ))}
-                    </div>
-                    {cs.input_method === 'by_amount' ? (
-                      <Field label="투자 원금"><input type="number" step="any" placeholder="0" value={cs.invest_amount} onChange={setCS('invest_amount')} className={inputCls} /></Field>
-                    ) : (
-                      <Field label="코인 수량"><input type="number" step="any" placeholder="0.001" value={cs.coin_quantity} onChange={setCS('coin_quantity')} className={inputCls} /></Field>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="평균 매수 가격"><input type="number" step="any" placeholder="0" value={cs.avg_buy_price} onChange={setCS('avg_buy_price')} className={inputCls} /></Field>
-                    <Field label="평균 매도 가격"><input type="number" step="any" placeholder="0" value={cs.avg_sell_price} onChange={setCS('avg_sell_price')} className={inputCls} /></Field>
-                  </div>
-                  <Field label="수수료"><input type="number" step="any" placeholder="0" value={cs.fee} onChange={setCS('fee')} className={inputCls} /></Field>
-                  {csCalc && csCalc.pl != null && (
-                    <div className={`p-4 rounded-xl border ${csCalc.pl >= 0 ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                        <div><div className="text-xs text-slate-500">투자 원금</div><div className="font-bold">{fmtNum(csCalc.investAmt, 2)}</div></div>
-                        <div><div className="text-xs text-slate-500">코인 수량</div><div className="font-bold">{csCalc.qty}</div></div>
-                        <div><div className="text-xs text-slate-500">순손익</div><div className={`font-bold text-lg ${plColor(csCalc.pl)}`}>{csCalc.pl>=0?'+':''}{fmtNum(csCalc.pl,2)}</div></div>
-                        <div><div className="text-xs text-slate-500">수익률</div><div className={`font-bold ${plColor(csCalc.plRate)}`}>{csCalc.plRate!=null?`${csCalc.plRate>=0?'+':''}${csCalc.plRate.toFixed(2)}%`:'-'}</div></div>
-                      </div>
-                    </div>
-                  )}
-                </>)}
-              </div>
-            )}
-
-            {/* ═══════════════════════════
-                섹션 2: 리스크 관리
-            ═══════════════════════════ */}
-            {section === 2 && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="손절 기준">
-                    <input type="text" placeholder="지지선 이탈 시 / -3% 도달 시" value={common.stop_loss_basis} onChange={setC('stop_loss_basis')} className={inputCls} />
-                  </Field>
-                  <Field label="목표가">
-                    <input type="number" step="any" placeholder="0" value={common.target_price} onChange={setC('target_price')} className={inputCls} />
-                  </Field>
-                </div>
-                {assetType === 'crypto_futures' && (
-                  <SelectField label="손절 방식" value={cf.stop_loss_method} onChange={v => setCf(p=>({...p,stop_loss_method:v}))}
-                    options={[{key:'price',label:'가격 손절'},{key:'pre_liquidation',label:'청산 전 수동 손절'},{key:'time',label:'시간 손절'},{key:'trailing',label:'트레일링 스탑'},{key:'none',label:'손절 없음'}]} />
                 )}
-                {assetType === 'stock_futures' && (
-                  <Field label="청산 위험 메모">
-                    <textarea value={sf.liquidation_risk_memo} onChange={setSF('liquidation_risk_memo')} placeholder="증거금 부족 위험, 만기 임박 등..." className={inputCls + ' resize-none h-20'} />
-                  </Field>
-                )}
-                <SelectField label="원칙 준수 여부" value={common.principle_followed} onChange={v => setCommon(p=>({...p,principle_followed:v}))}
-                  options={[{key:'fully_followed',label:'✅ 완전히 지킴'},{key:'partially_followed',label:'⚠️ 일부 지킴'},{key:'not_followed',label:'❌ 안 지킴'}]} />
-              </div>
-            )}
-
-            {/* ═══════════════════════════
-                섹션 3: 시장 상황
-            ═══════════════════════════ */}
-            {section === 3 && (
-              <div className="space-y-4">
-                {(assetType === 'crypto_futures' || assetType === 'crypto_spot') && (<>
-                  <div className="grid grid-cols-2 gap-4">
-                    <SelectField label="BTC 방향" value={assetType==='crypto_futures'?cf.btc_direction:cs.btc_direction}
-                      onChange={v => assetType==='crypto_futures'?setCf(p=>({...p,btc_direction:v})):setCs(p=>({...p,btc_direction:v}))}
-                      options={[{key:'up',label:'상승'},{key:'down',label:'하락'},{key:'sideways',label:'횡보'},{key:'dump_recovery',label:'급락 후 반등'},{key:'pump_correction',label:'급등 후 조정'}]} />
-                    <Field label="BTC 도미넌스 (%)">
-                      <input type="number" step="any" placeholder="50.0" value={assetType==='crypto_futures'?cf.btc_dominance:cs.btc_dominance}
-                        onChange={assetType==='crypto_futures'?setCF('btc_dominance'):setCS('btc_dominance')} className={inputCls} />
+                {(assetType === 'stock_spot') && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="수수료">
+                      <input type="number" className={inputCls} placeholder="원" value={ssFee} onChange={e => setSsFee(e.target.value)} />
+                    </Field>
+                    <Field label="세금">
+                      <input type="number" className={inputCls} placeholder="원" value={ssTax} onChange={e => setSsTax(e.target.value)} />
                     </Field>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <SelectField label="변동성" value={assetType==='crypto_futures'?cf.volatility:cs.volatility}
-                      onChange={v => assetType==='crypto_futures'?setCf(p=>({...p,volatility:v})):setCs(p=>({...p,volatility:v}))}
-                      options={[{key:'low',label:'낮음'},{key:'normal',label:'보통'},{key:'high',label:'높음'},{key:'very_high',label:'매우 높음'}]} />
-                    <SelectField label="진입 시간대" value={assetType==='crypto_futures'?cf.entry_session:cs.entry_session}
-                      onChange={v => assetType==='crypto_futures'?setCf(p=>({...p,entry_session:v})):setCs(p=>({...p,entry_session:v}))}
-                      options={[{key:'asia',label:'아시아장'},{key:'europe',label:'유럽장'},{key:'us',label:'미국장'},{key:'midnight',label:'새벽'}]} />
-                  </div>
-                  <SelectField label="뉴스/이벤트" value={assetType==='crypto_futures'?cf.news_event:cs.news_event}
-                    onChange={v => assetType==='crypto_futures'?setCf(p=>({...p,news_event:v})):setCs(p=>({...p,news_event:v}))}
-                    options={[{key:'listing',label:'상장'},{key:'unlock',label:'락업해제'},{key:'etf',label:'ETF 이슈'},{key:'hack',label:'해킹'},{key:'regulation',label:'규제'},{key:'twitter',label:'X/트위터 이슈'},{key:'none',label:'없음'}]} />
-                  <SelectField label="과매매 여부" value={assetType==='crypto_futures'?cf.overtrading:cs.overtrading}
-                    onChange={v => assetType==='crypto_futures'?setCf(p=>({...p,overtrading:v})):setCs(p=>({...p,overtrading:v}))}
-                    options={[{key:'1_2',label:'오늘 1~2회'},{key:'3_5',label:'3~5회'},{key:'6_plus',label:'6회 이상'},{key:'dont_remember',label:'기억 안 남'}]} />
-                </>)}
-                {assetType === 'stock_spot' && (<>
-                  <div className="grid grid-cols-2 gap-4">
-                    <SelectField label="매매 시간대" value={ss.trade_session} onChange={v => setSs(p=>({...p,trade_session:v}))}
-                      options={[{key:'market_open',label:'장 초반'},{key:'intraday',label:'장중'},{key:'pre_close',label:'장 마감 전'},{key:'pre_market',label:'프리마켓'},{key:'after_market',label:'애프터마켓'}]} />
-                    <SelectField label="투자 기간" value={ss.investment_period} onChange={v => setSs(p=>({...p,investment_period:v}))}
-                      options={[{key:'day',label:'당일'},{key:'1_3days',label:'1~3일'},{key:'1_2weeks',label:'1~2주'},{key:'1month_plus',label:'1개월 이상'},{key:'long_term',label:'장기'}]} />
-                  </div>
-                  <Field label="섹터">
-                    <input type="text" placeholder="반도체, 바이오, 금융..." value={ss.sector} onChange={setSS('sector')} className={inputCls} />
+                )}
+                {(assetType === 'crypto_spot') && (
+                  <Field label="수수료">
+                    <input type="number" className={inputCls} placeholder="원/USDT" value={csFee} onChange={e => setCsFee(e.target.value)} />
                   </Field>
-                  <div className="space-y-2">
-                    {[
-                      {key:'check_foreign_flow',label:'외국인 수급 확인'},
-                      {key:'check_institutional_flow',label:'기관 수급 확인'},
-                      {key:'check_retail_flow',label:'개인 수급 확인'},
-                      {key:'has_earnings',label:'실적 발표 여부'},
-                      {key:'has_disclosure',label:'공시 여부'},
-                      {key:'has_dividend',label:'배당 여부'},
-                    ].map(item => (
-                      <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={(ss as any)[item.key]}
-                          onChange={e => setSs(p=>({...p,[item.key]:e.target.checked}))} className="w-4 h-4 accent-blue-500" />
-                        <span className="text-sm text-slate-300">{item.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </>)}
-                {assetType === 'stock_futures' && (<>
-                  <div className="grid grid-cols-2 gap-4">
-                    <SelectField label="진입 당시 시장 방향" value={sf.market_direction} onChange={v => setSf(p=>({...p,market_direction:v}))}
-                      options={[{key:'up',label:'상승'},{key:'down',label:'하락'},{key:'sideways',label:'횡보'},{key:'pump_correction',label:'급등 후 조정'},{key:'dump_recovery',label:'급락 후 반등'}]} />
-                    <SelectField label="변동성" value={sf.volatility} onChange={v => setSf(p=>({...p,volatility:v}))}
-                      options={[{key:'low',label:'낮음'},{key:'normal',label:'보통'},{key:'high',label:'높음'},{key:'very_high',label:'매우 높음'}]} />
-                  </div>
-                  <SelectField label="주요 이벤트" value={sf.major_event} onChange={v => setSf(p=>({...p,major_event:v}))}
-                    options={[{key:'fomc',label:'FOMC'},{key:'cpi',label:'CPI'},{key:'employment',label:'고용지표'},{key:'option_expiry',label:'옵션만기'},{key:'futures_expiry',label:'선물만기'},{key:'earnings_season',label:'실적 시즌'},{key:'none',label:'없음'}]} />
-                  <SelectField label="매매 시간대" value={sf.trade_session} onChange={v => setSf(p=>({...p,trade_session:v}))}
-                    options={[{key:'market_open',label:'장 초반'},{key:'intraday',label:'장중'},{key:'pre_close',label:'장 마감 전'},{key:'night',label:'야간장'}]} />
-                </>)}
+                )}
+
+                {/* 공통 상세 항목 */}
+                <DetailSection showEntryReason={true} />
               </div>
             )}
 
-            {/* ═══════════════════════════
-                섹션 4: 감정/복기
-            ═══════════════════════════ */}
-            {section === 4 && (
-              <div className="space-y-4">
-                <div>
-                  <label className={labelCls}>진입 전 감정 상태</label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {EMOTIONS.map(em => (
-                      <button key={em.key} type="button"
-                        onClick={() => setCommon(p=>({...p,emotion_before:p.emotion_before===em.key?'':em.key}))}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                          common.emotion_before===em.key ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                        }`}>{em.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <SelectField label="청산 이유" value={common.exit_reason} onChange={v => setCommon(p=>({...p,exit_reason:v}))}
-                  options={EXIT_REASONS} />
-                <div>
-                  <label className={labelCls}>매매 점수 (1~10)</label>
-                  <div className="flex items-center gap-3">
-                    <input type="range" min="1" max="10" value={common.score || 5}
-                      onChange={setC('score')} className="flex-1 accent-blue-500" />
-                    <span className="text-2xl font-bold text-blue-400 w-8 text-center">{common.score || 5}</span>
-                  </div>
-                </div>
-                <Field label="잘한 점">
-                  <textarea value={common.good_points} onChange={setC('good_points')} placeholder="이번 매매에서 잘한 점..." className={inputCls + ' resize-none h-20'} />
-                </Field>
-                <Field label="실수한 점">
-                  <textarea value={common.mistakes} onChange={setC('mistakes')} placeholder="이번 매매에서 실수한 점..." className={inputCls + ' resize-none h-20'} />
-                </Field>
-                <Field label="다음에 고칠 점">
-                  <textarea value={common.improvements} onChange={setC('improvements')} placeholder="다음 매매에서 개선할 점..." className={inputCls + ' resize-none h-20'} />
-                </Field>
-                <Field label="한 줄 복기">
-                  <input type="text" placeholder="이번 매매의 핵심 교훈 한 줄로..." value={common.review_summary} onChange={setC('review_summary')} className={inputCls} />
-                </Field>
-              </div>
-            )}
+            {/* ══════════════════════════════════
+                제출 버튼
+            ══════════════════════════════════ */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black rounded-xl transition-colors text-base shadow-lg shadow-blue-500/20"
+            >
+              {loading ? '저장 중...' : '매매 기록 저장하기'}
+            </button>
 
-            {/* 네비게이션 버튼 */}
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-800">
-              <button type="button" onClick={() => setSection(s => Math.max(0, s-1))}
-                disabled={section === 0}
-                className="flex items-center gap-1 px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 disabled:opacity-30 transition-colors text-sm">
-                <ChevronLeft className="h-4 w-4" /> 이전
-              </button>
-
-              {section < SECTIONS.length - 1 ? (
-                <button type="button" onClick={() => setSection(s => s+1)}
-                  className="flex items-center gap-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
-                  다음 <ChevronRight className="h-4 w-4" />
-                </button>
-              ) : (
-                <button type="submit" disabled={loading}
-                  className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-bold transition-colors">
-                  {loading ? '저장 중...' : '💾 매매 기록 저장'}
-                </button>
-              )}
-            </div>
-
-            {/* 면책 고지 */}
-            <p className="text-xs text-slate-600 text-center mt-6 leading-relaxed">
+            <p className="text-xs text-slate-600 text-center leading-relaxed pb-4">
               본 서비스는 투자 판단을 대신하지 않으며, 종목 추천·매수/매도 지시·수익 보장을 제공하지 않습니다.<br />
               모든 투자의 책임은 투자자 본인에게 있습니다.
             </p>

@@ -99,12 +99,8 @@ export default function AdminPage() {
   // ── 가입자 조회
   const fetchUsers = useCallback(async () => {
     setUsersLoading(true)
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    const token = session?.access_token
-    if (!token) { setUsersLoading(false); return }
     const res = await fetch('/api/admin/users', {
-      headers: { Authorization: `Bearer ${token}` }
+      credentials: 'include',
     })
     if (res.ok) {
       const json = await res.json()

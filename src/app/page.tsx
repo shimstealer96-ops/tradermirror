@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Check,
 } from "lucide-react";
 import LeadPopup from "@/components/LeadPopup";
 
@@ -397,64 +398,19 @@ export default function HomePage() {
       ═══════════════════════════════════════════ */}
       <section className="w-full bg-slate-900/20 py-20 px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
+          <div className="text-center mb-12">
             <span className="inline-block mb-4 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">요금제</span>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-100 mb-3">기록은 무료, 깊은 분석은 Pro</h2>
             <p className="text-slate-400 text-sm">깊은 분석이 필요할 때 Pro를 사용하면 됩니다.</p>
           </div>
 
-          {/* Mobile: Pro first */}
-          <div className="flex flex-col md:grid md:grid-cols-2 gap-6 mb-10">
-
-            {/* Pro (shown first on mobile) */}
-            <div className="bg-blue-950/40 border-2 border-blue-500/50 rounded-2xl p-8 relative flex flex-col order-first md:order-last">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                <span className="px-4 py-1 bg-blue-600 text-white text-xs font-black rounded-full">추천</span>
-              </div>
-              <div className="mb-5">
-                <p className="text-blue-400 text-sm font-medium mb-1">Pro</p>
-                <div className="flex items-baseline gap-1">
-                  <p className="text-4xl font-black text-slate-100">₩9,900</p>
-                  <p className="text-slate-400 text-sm">/ 월</p>
-                </div>
-                <p className="text-slate-400 text-sm mt-2">내 매매패턴을 깊게 분석하세요.</p>
-              </div>
-              <ul className="space-y-2.5 mb-8 flex-1">
-                {[
-                  "매매일지 무제한 등록",
-                  "매매패턴 무제한 분석",
-                  "오늘 / 이번 달 / 전체 기간 분석",
-                  "감정 상태별 성과 분석",
-                  "진입 근거별 성과 분석",
-                  "손절 기준 작성 여부 분석",
-                  "자산 유형별 상세 분석",
-                  "AI 매매 리포트 전체 제공",
-                  "월간 리포트 저장",
-                  "청산가·펀딩비 계산기 전체 기능",
-                ].map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm text-slate-200">
-                    <CheckCircle2 className="h-4 w-4 text-blue-400 shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/pricing">
-                <button className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-colors">
-                  7일 무료로 Pro 시작하기
-                </button>
-              </Link>
-              <p className="text-xs text-slate-500 text-center mt-2">
-                7일 무료 체험 · 이후 월 ₩9,900 · 언제든 해지 가능
-              </p>
-              <p className="text-xs text-slate-500 text-center mt-1">
-                한 번의 충동매매만 줄여도 월 이용료 이상의 손실을 아낄 수 있습니다.
-              </p>
-            </div>
+          {/* 3 카드 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 items-start">
 
             {/* Free */}
-            <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-8 flex flex-col md:order-first">
-              <div className="mb-5">
-                <p className="text-slate-400 text-sm font-medium mb-1">Free</p>
+            <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-7 flex flex-col">
+              <div className="mb-6">
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Free</p>
                 <p className="text-4xl font-black text-slate-100">₩0</p>
                 <p className="text-slate-400 text-sm mt-2">매매일지는 무료로 시작하세요.</p>
               </div>
@@ -462,56 +418,102 @@ export default function HomePage() {
                 {[
                   "매매일지 하루 5개 등록",
                   "하루 1회 기본 분석",
-                  "최근 7일 기록 기준 요약 분석",
-                  "승률, 총 손익, 평균 수익률 제공",
+                  "최근 7일 기록 요약 분석",
+                  "승률·총손익·평균수익률",
                   "청산가 계산기 기본 기능",
                 ].map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm text-slate-300">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    {f}
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-slate-300">
+                    <Check className="h-4 w-4 text-slate-500 shrink-0" />{f}
                   </li>
                 ))}
               </ul>
               <Link href="/login">
-                <button className="w-full py-3 border border-slate-600 text-slate-300 hover:bg-slate-800 font-bold rounded-xl transition-colors">
+                <button className="w-full py-3 border border-slate-600 text-slate-300 hover:bg-slate-800 font-bold rounded-xl transition-colors text-sm">
                   무료로 시작하기
                 </button>
               </Link>
-              <p className="text-xs text-slate-500 text-center mt-2">
-                기록 습관을 만드는 데 충분합니다.
-              </p>
+              <p className="text-xs text-slate-600 text-center mt-3">카드 정보 필요 없음</p>
             </div>
-          </div>
 
-          {/* Objection busting */}
-          <div className="max-w-2xl mx-auto space-y-3 mb-12">
-            {[
-              {
-                q: "매매일지를 쓰는 데 돈을 내야 하나요?",
-                a: "아닙니다. 기록은 무료로 시작할 수 있습니다.\n다만 내가 어떤 감정, 시간대, 진입 근거에서 반복해서 손실을 내는지 깊게 보고 싶다면 Pro 기능이 필요합니다.",
-              },
-              {
-                q: "월 9,900원이 아깝지 않을까요?",
-                a: "한 번의 충동매매만 줄여도 월 이용료 이상의 손실을 아낄 수 있습니다.",
-              },
-              {
-                q: "이 서비스가 종목을 추천하나요?",
-                a: "아닙니다. TraderMirror는 종목 추천, 매수·매도 지시, 수익 보장을 제공하지 않습니다.\n사용자의 매매기록을 분석해 반복 실수를 보여주는 도구입니다.",
-              },
-            ].map((faq) => (
-              <div key={faq.q} className="bg-slate-900/40 border border-slate-800 rounded-xl p-5">
-                <p className="font-bold text-slate-200 mb-2 text-sm">&ldquo;{faq.q}&rdquo;</p>
-                <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-line">{faq.a}</p>
+            {/* Pro 연간 — 강조 */}
+            <div className="relative bg-gradient-to-b from-emerald-950/60 to-slate-900/80 border-2 border-emerald-500/60 rounded-2xl p-7 flex flex-col shadow-xl shadow-emerald-500/10 md:-mt-4">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-2 whitespace-nowrap">
+                <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-black rounded-full">가장 인기</span>
+                <span className="px-3 py-1 bg-emerald-700 text-white text-xs font-black rounded-full">2개월 무료</span>
               </div>
-            ))}
+              <div className="mb-6 mt-2">
+                <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-2">Pro 연간</p>
+                <div className="flex items-baseline gap-1.5 mb-1">
+                  <p className="text-4xl font-black text-slate-100">₩6,600</p>
+                  <p className="text-slate-400 text-sm">/ 월</p>
+                </div>
+                <p className="text-slate-500 text-xs line-through">월 ₩9,900</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded border border-emerald-500/30">33% 할인</span>
+                  <p className="text-slate-400 text-xs">연 ₩79,200 청구</p>
+                </div>
+              </div>
+              <ul className="space-y-2.5 mb-8 flex-1 text-sm text-slate-200">
+                {[
+                  "매매일지 무제한 등록",
+                  "매매패턴 무제한 분석",
+                  "전체 기간 분석",
+                  "감정·진입근거·자산유형별 분석",
+                  "AI 매매 리포트",
+                  "연간 최저가",
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5">
+                    <Check className="h-4 w-4 text-emerald-400 shrink-0" />{f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/pricing">
+                <button className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl transition-colors shadow-lg shadow-emerald-500/20 text-sm">
+                  연간 시작하기 →
+                </button>
+              </Link>
+              <p className="text-xs text-emerald-700 text-center mt-3">연 ₩79,200 · 언제든 해지 가능</p>
+            </div>
+
+            {/* Pro 월간 */}
+            <div className="bg-blue-950/40 border border-blue-500/40 rounded-2xl p-7 flex flex-col">
+              <div className="mb-6">
+                <p className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-2">Pro 월간</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-4xl font-black text-slate-100">₩9,900</p>
+                  <p className="text-slate-400 text-sm">/ 월</p>
+                </div>
+                <p className="text-slate-400 text-sm mt-2">전체 기능 무제한</p>
+              </div>
+              <ul className="space-y-2.5 mb-8 flex-1 text-sm text-slate-200">
+                {[
+                  "매매일지 무제한 등록",
+                  "매매패턴 무제한 분석",
+                  "전체 기간 분석",
+                  "감정·진입근거·자산유형별 분석",
+                  "AI 매매 리포트",
+                  "월 단위 결제",
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5">
+                    <Check className="h-4 w-4 text-blue-400 shrink-0" />{f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/pricing">
+                <button className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-colors text-sm">
+                  월간 시작하기
+                </button>
+              </Link>
+              <p className="text-xs text-slate-600 text-center mt-3">월 ₩9,900 · 언제든 해지 가능</p>
+            </div>
           </div>
 
           {/* Bottom CTA */}
           <div className="text-center">
             <p className="text-slate-300 font-medium mb-4">7일 동안 Pro 기능을 먼저 써보고 결정하세요.</p>
-            <Link href="/analyze">
-              <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-lg transition-colors shadow-lg shadow-blue-500/20">
-                7일 무료로 시작하기 →
+            <Link href="/pricing">
+              <button className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-lg transition-colors shadow-lg shadow-emerald-500/20">
+                요금제 자세히 보기 →
               </button>
             </Link>
             <p className="text-xs text-slate-500 mt-3">무료 체험 종료 후 Free 플랜으로 전환됩니다.</p>

@@ -273,6 +273,7 @@ export default function NewTradePage() {
       user_id: user.id,
       asset_type: assetType,
       trade_date: tradeDate,
+      ticker: '',
       entry_reason: entryReason ? [entryReason] : null,
       emotion_before: emotion || null,
       score: score || null,

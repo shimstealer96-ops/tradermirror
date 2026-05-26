@@ -93,25 +93,26 @@ function TagButtons({ options, value, onChange }: {
   )
 }
 
-function PnLDisplay({ pnl, pnlRate }: { pnl: number | null; pnlRate: number | null }) {
-  if (pnl === null || pnlRate === null) return null
-  const isProfit = pnl >= 0
+function PnLDisplay({ pnl, pnlRate, unit = '₩' }: { pnl: number | null; pnlRate: number | null; unit?: string }) {
+  if (pnlRate === null) return null
+  const isProfit = (pnlRate ?? 0) >= 0
   return (
     <div className={`rounded-xl px-4 py-3 flex items-center justify-between ${isProfit ? 'bg-emerald-950/40 border border-emerald-500/30' : 'bg-red-950/40 border border-red-500/30'}`}>
       <span className="text-xs text-slate-400">실시간 손익</span>
       <span className={`text-sm font-black ${isProfit ? 'text-emerald-400' : 'text-red-400'}`}>
-        {isProfit ? '+' : ''}{pnlRate.toFixed(2)}% / {isProfit ? '+' : ''}₩{Math.round(pnl).toLocaleString()}
+        {isProfit ? '+' : ''}{pnlRate.toFixed(2)}%
+        {pnl !== null && ` / ${isProfit ? '+' : ''}${unit}${Math.abs(pnl) >= 1000 ? Math.round(pnl).toLocaleString() : pnl.toFixed(4)}`}
       </span>
     </div>
   )
 }
 
-function LiquidationDisplay({ price }: { price: number | null }) {
+function LiquidationDisplay({ price, unit = '₩' }: { price: number | null; unit?: string }) {
   if (!price) return null
   return (
     <div className="bg-red-950/30 border border-red-500/30 rounded-xl px-4 py-3 flex items-center justify-between">
       <span className="text-xs text-slate-400">⚠️ 예상 강제청산가</span>
-      <span className="text-sm font-black text-red-400">₩{Math.round(price).toLocaleString()}</span>
+      <span className="text-sm font-black text-red-400">{unit}{price >= 1 ? Math.round(price).toLocaleString() : price.toFixed(4)}</span>
     </div>
   )
 }
@@ -205,16 +206,17 @@ export default function NewTradePage() {
     const ep = Number(cfEntry), xp = Number(cfExit), lev = Number(cfLev) || 1
     const fee = Number(cfFee) || 0, funding = Number(cfFunding) || 0
     const margin = Number(cfMargin) || 0
-    if (!ep || !xp || !lev) return { pnl: null, pnlRate: null, liqPrice: null }
-    const qty = margin > 0 ? (margin * lev) / ep : 1
-    const raw = cfDir === 'long' ? (xp - ep) * qty : (ep - xp) * qty
-    const pnl = raw - fee - funding
-    const pnlRate = margin > 0 ? (pnl / margin) * 100 : ((xp - ep) / ep) * lev * (cfDir === 'long' ? 1 : -1) * 100
-    const liqPrice = ep > 0 && lev > 0
-      ? cfDir === 'long'
-        ? ep * (1 - 1 / lev + 0.004)
-        : ep * (1 + 1 / lev - 0.004)
-      : null
+    if (!ep || !lev) return { pnl: null, pnlRate: null, liqPrice: null }
+    // 강제청산가: 진입가+레버리지만 있으면 계산
+    const liqPrice = cfDir === 'long'
+      ? ep * (1 - 1 / lev + 0.004)
+      : ep * (1 + 1 / lev - 0.004)
+    // 실시간 손익: 청산가 있어야 계산
+    if (!xp) return { pnl: null, pnlRate: null, liqPrice }
+    const qty = margin > 0 ? (margin * lev) / ep : null
+    const priceDiff = cfDir === 'long' ? xp - ep : ep - xp
+    const pnlRate = (priceDiff / ep) * lev * 100
+    const pnl = qty !== null ? priceDiff * qty - fee - funding : null
     return { pnl, pnlRate, liqPrice }
   }
 
@@ -532,8 +534,8 @@ export default function NewTradePage() {
                     <input type="datetime-local" className={inputCls} value={cfExitDt} onChange={e => setCfExitDt(e.target.value)} />
                   </Field>
                 </div>
-                {cfCalc.liqPrice !== null && <LiquidationDisplay price={cfCalc.liqPrice} />}
-                {cfCalc.pnl !== null && <PnLDisplay pnl={cfCalc.pnl} pnlRate={cfCalc.pnlRate} />}
+                {cfCalc.liqPrice !== null && <LiquidationDisplay price={cfCalc.liqPrice} unit="USDT " />}
+                {cfCalc.pnlRate !== null && <PnLDisplay pnl={cfCalc.pnl} pnlRate={cfCalc.pnlRate} unit="USDT " />}
                 <Field label="감정 상태">
                   <TagButtons options={EMOTIONS} value={emotion} onChange={setEmotion} />
                 </Field>
@@ -591,8 +593,8 @@ export default function NewTradePage() {
                     <input type="datetime-local" className={inputCls} value={sfExitDt} onChange={e => setSfExitDt(e.target.value)} />
                   </Field>
                 </div>
-                {(sfCalc as any).liqPrice !== null && <LiquidationDisplay price={(sfCalc as any).liqPrice} />}
-                {sfCalc.pnl !== null && <PnLDisplay pnl={sfCalc.pnl} pnlRate={sfCalc.pnlRate} />}
+                {(sfCalc as any).liqPrice !== null && <LiquidationDisplay price={(sfCalc as any).liqPrice} unit="₩" />}
+                {sfCalc.pnlRate !== null && <PnLDisplay pnl={sfCalc.pnl} pnlRate={sfCalc.pnlRate} unit="₩" />}
                 <Field label="감정 상태">
                   <TagButtons options={EMOTIONS} value={emotion} onChange={setEmotion} />
                 </Field>
@@ -645,7 +647,7 @@ export default function NewTradePage() {
                     <input type="datetime-local" className={inputCls} value={csExitDt} onChange={e => setCsExitDt(e.target.value)} />
                   </Field>
                 </div>
-                {csCalc.pnl !== null && <PnLDisplay pnl={csCalc.pnl} pnlRate={csCalc.pnlRate} />}
+                {csCalc.pnl !== null && <PnLDisplay pnl={csCalc.pnl} pnlRate={csCalc.pnlRate} unit="USDT " />}
                 <Field label="감정 상태">
                   <TagButtons options={EMOTIONS} value={emotion} onChange={setEmotion} />
                 </Field>

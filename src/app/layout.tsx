@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   description: "거래 내역 붙여넣으면 반복 실수를 데이터로 보여드립니다. 수익률 착시 교정, 청산가 계산, 펀딩피 계산 무료 제공",
   verification: {
     google: "mGsTiVx2IjNiICRHU0_Auo19ngqtky2SbMlyivWMQIo",
+    other: {
+      "naver-site-verification": ["02088b4d6b3265f0a909d55205f00391e391f907"],
+    },
   },
   openGraph: {
     title: "내 매매 패턴 무료 분석 | TraderMirror",

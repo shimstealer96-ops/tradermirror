@@ -18,12 +18,15 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "내 매매 패턴 무료 분석 | TraderMirror",
   description: "거래 내역 붙여넣으면 반복 실수를 데이터로 보여드립니다. 수익률 착시 교정, 청산가 계산, 펀딩피 계산 무료 제공",
+  verification: {
+    google: "mGsTiVx2IjNiICRHU0_Auo19ngqtky2SbMlyivWMQIo",
+  },
   openGraph: {
     title: "내 매매 패턴 무료 분석 | TraderMirror",
     description: "투자 분석 종합 플랫폼. 거래 내역 붙여넣으면 반복 실수를 데이터로 보여드립니다.",
     type: "website",
     locale: "ko_KR",
-    url: "https://tradermirror.com",
+    url: "https://tradermirror.co.kr",
     siteName: "TraderMirror",
   },
 };

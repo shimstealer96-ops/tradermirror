@@ -556,6 +556,10 @@ export default function HomePage() {
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Vol.1</span>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">현재 제공</span>
               </div>
+              {/* 3D 이미지 */}
+              <div className="flex justify-center mb-4">
+                <img src="/ebook-vol1.jpg" alt="첫 투자 교과서" className="w-32 h-32 object-contain drop-shadow-[0_0_18px_rgba(59,130,246,0.5)]" />
+              </div>
               <h3 className="text-lg font-black text-slate-100 mb-2">첫 투자 교과서</h3>
               <p className="text-xs text-blue-400 mb-3 font-medium">주식이 무섭고, 어디서부터 시작해야 할지 모르는 분</p>
               <ul className="text-xs text-slate-400 space-y-1 mb-4 flex-1">
@@ -582,6 +586,10 @@ export default function HomePage() {
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">Vol.2</span>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-700 text-slate-400 border border-slate-600">출시 예정</span>
               </div>
+              {/* 3D 이미지 */}
+              <div className="flex justify-center mb-4">
+                <img src="/ebook-vol2.jpg" alt="차트·매수 타이밍 편" className="w-32 h-32 object-contain drop-shadow-[0_0_18px_rgba(168,85,247,0.5)]" />
+              </div>
               <h3 className="text-lg font-black text-slate-100 mb-2">차트·매수 타이밍 편</h3>
               <p className="text-xs text-purple-400 mb-3 font-medium">기초는 알지만 언제 사고팔아야 할지 어려운 분</p>
               <ul className="text-xs text-slate-400 space-y-1 mb-4 flex-1">
@@ -603,6 +611,10 @@ export default function HomePage() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">Vol.3</span>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-700 text-slate-400 border border-slate-600">출시 예정</span>
+              </div>
+              {/* 3D 이미지 */}
+              <div className="flex justify-center mb-4">
+                <img src="/ebook-vol3.png" alt="자산 설계·포트폴리오 편" className="w-32 h-32 object-contain drop-shadow-[0_0_18px_rgba(249,115,22,0.5)]" />
               </div>
               <h3 className="text-lg font-black text-slate-100 mb-2">자산 설계·포트폴리오 편</h3>
               <p className="text-xs text-orange-400 mb-3 font-medium">단기 매매를 넘어 자산을 장기적으로 키우고 싶은 분</p>

@@ -326,11 +326,11 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
                         <span className="text-xs text-slate-300 leading-relaxed">
                           <span className="font-bold text-slate-200">[필수] 개인정보 수집 및 이용 동의</span>
                           <br />
-                          수집 항목: 성함, 연락처, 이메일, 투자 관련 정보
-                          <br />
-                          수집 목적: 무료 혜택 제공, 서비스 안내
-                          <br />
-                          보유 기간: 동의 철회 시까지
+                          <span className="text-[10px] text-slate-500">
+                            수집 항목: 성함, 연락처, 이메일, 투자 관련 정보<br />
+                            수집 목적: 무료 혜택 제공, 서비스 안내<br />
+                            보유 기간: 동의 철회 시까지
+                          </span>
                         </span>
                       </label>
                       {errors.privacy && <p className="mt-2 text-red-400 text-xs">{errors.privacy}</p>}

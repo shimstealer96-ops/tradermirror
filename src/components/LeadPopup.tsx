@@ -65,6 +65,7 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [privacyAgreed, setPrivacyAgreed] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -86,6 +87,7 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
     if (!formData.name.trim()) errs.name = '성함을 입력해주세요'
     if (!formData.phone.trim()) errs.phone = '연락처를 입력해주세요'
     if (!formData.email.trim()) errs.email = '이메일을 입력해주세요'
+    if (!privacyAgreed) errs.privacy = '개인정보 수집 및 이용에 동의해주세요'
     return errs
   }
 
@@ -310,6 +312,28 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
                         className={inputClass}
                       />
                       {errors.email && <p className="mt-1 text-red-400 text-xs">{errors.email}</p>}
+                    </div>
+
+                    {/* 개인정보 수집 동의 */}
+                    <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-3">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={privacyAgreed}
+                          onChange={e => setPrivacyAgreed(e.target.checked)}
+                          className="mt-0.5 w-4 h-4 accent-blue-500 shrink-0 cursor-pointer"
+                        />
+                        <span className="text-xs text-slate-300 leading-relaxed">
+                          <span className="font-bold text-slate-200">[필수] 개인정보 수집 및 이용 동의</span>
+                          <br />
+                          수집 항목: 성함, 연락처, 이메일, 투자 관련 정보
+                          <br />
+                          수집 목적: 무료 혜택 제공, 서비스 안내
+                          <br />
+                          보유 기간: 동의 철회 시까지
+                        </span>
+                      </label>
+                      {errors.privacy && <p className="mt-2 text-red-400 text-xs">{errors.privacy}</p>}
                     </div>
                     <button
                       type="button"

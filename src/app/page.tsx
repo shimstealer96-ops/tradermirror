@@ -558,7 +558,7 @@ export default function HomePage() {
               </div>
               {/* 3D 이미지 */}
               <div className="flex justify-center mb-4">
-                <img src="/ebook-vol1.jpg" alt="첫 투자 교과서" className="w-32 h-32 object-contain drop-shadow-[0_0_18px_rgba(59,130,246,0.5)]" />
+                <img src="/ebook-vol1.png" alt="첫 투자 교과서" className="w-32 h-32 object-contain drop-shadow-[0_0_18px_rgba(59,130,246,0.5)]" />
               </div>
               <h3 className="text-lg font-black text-slate-100 mb-2">첫 투자 교과서</h3>
               <p className="text-xs text-blue-400 mb-3 font-medium">주식이 무섭고, 어디서부터 시작해야 할지 모르는 분</p>
@@ -588,7 +588,7 @@ export default function HomePage() {
               </div>
               {/* 3D 이미지 */}
               <div className="flex justify-center mb-4">
-                <img src="/ebook-vol2.jpg" alt="차트·매수 타이밍 편" className="w-32 h-32 object-contain drop-shadow-[0_0_18px_rgba(168,85,247,0.5)]" />
+                <img src="/ebook-vol2-nobg.png" alt="차트·매수 타이밍 편" className="w-32 h-32 object-contain drop-shadow-[0_0_18px_rgba(168,85,247,0.5)]" />
               </div>
               <h3 className="text-lg font-black text-slate-100 mb-2">차트·매수 타이밍 편</h3>
               <p className="text-xs text-purple-400 mb-3 font-medium">기초는 알지만 언제 사고팔아야 할지 어려운 분</p>
@@ -614,7 +614,7 @@ export default function HomePage() {
               </div>
               {/* 3D 이미지 */}
               <div className="flex justify-center mb-4">
-                <img src="/ebook-vol3.png" alt="자산 설계·포트폴리오 편" className="w-32 h-32 object-contain drop-shadow-[0_0_18px_rgba(249,115,22,0.5)]" />
+                <img src="/ebook-vol3-nobg.png" alt="자산 설계·포트폴리오 편" className="w-32 h-32 object-contain drop-shadow-[0_0_18px_rgba(249,115,22,0.5)]" />
               </div>
               <h3 className="text-lg font-black text-slate-100 mb-2">자산 설계·포트폴리오 편</h3>
               <p className="text-xs text-orange-400 mb-3 font-medium">단기 매매를 넘어 자산을 장기적으로 키우고 싶은 분</p>

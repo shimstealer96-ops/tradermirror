@@ -192,6 +192,10 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
               >
                 <X className="h-5 w-5" />
               </button>
+              {/* Hero 이미지 */}
+              <div className="flex justify-center mb-3">
+                <img src="/popup-hero.png" alt="TraderMirror" className="w-20 h-20 object-contain drop-shadow-[0_0_20px_rgba(59,130,246,0.6)]" />
+              </div>
               <span className="inline-block mb-3 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                 첫 방문자 한정 혜택
               </span>
@@ -212,40 +216,48 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
               {/* LEFT: Benefit Cards */}
               <div className="space-y-3">
                 {/* Card 1: Free trial */}
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                  <span className="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                    무료 제공
-                  </span>
-                  <p className="text-sm font-bold text-slate-100 mb-1">Pro 기능 7일권 추가 무료제공</p>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    내 매매패턴, 승률, 손익비, 반복 실수를 직접 확인해볼 수 있습니다.
-                  </p>
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex gap-3 items-start">
+                  <img src="/icon-pro-trial.png" alt="" className="w-12 h-12 object-contain shrink-0 drop-shadow-[0_0_10px_rgba(59,130,246,0.6)]" />
+                  <div>
+                    <span className="inline-block mb-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      무료 제공
+                    </span>
+                    <p className="text-sm font-bold text-slate-100 mb-1">Pro 기능 7일권 추가 무료제공</p>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      내 매매패턴, 승률, 손익비, 반복 실수를 직접 확인해볼 수 있습니다.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Card 2: Ebook discount */}
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
-                  <span className="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    50% 할인
-                  </span>
-                  <p className="text-sm font-bold text-slate-100 mb-1">실수를 줄이는 투자 교과서 50% 할인권</p>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-2">
-                    계좌 개설, 첫 매수 기준, 손절, 비중 관리, 차트, 자산 설계까지 내 투자 단계에 맞는 전자책을 신청자 한정가로 받을 수 있습니다.
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    <span className="line-through">₩19,900</span>
-                    <span className="text-emerald-400 font-black text-sm ml-2">→ ₩9,900</span>
-                    <span className="text-slate-600 ml-2">by MoneyStep</span>
-                  </p>
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex gap-3 items-start">
+                  <img src="/icon-ebook.png" alt="" className="w-12 h-12 object-contain shrink-0 drop-shadow-[0_0_10px_rgba(16,185,129,0.6)]" />
+                  <div>
+                    <span className="inline-block mb-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      50% 할인
+                    </span>
+                    <p className="text-sm font-bold text-slate-100 mb-1">실수를 줄이는 투자 교과서 50% 할인권</p>
+                    <p className="text-xs text-slate-400 leading-relaxed mb-2">
+                      계좌 개설, 첫 매수 기준, 손절, 비중 관리, 차트, 자산 설계까지 내 투자 단계에 맞는 전자책을 신청자 한정가로 받을 수 있습니다.
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      <span className="line-through">₩19,900</span>
+                      <span className="text-emerald-400 font-black text-sm ml-2">→ ₩9,900</span>
+                      <span className="text-slate-600 ml-2">by MoneyStep</span>
+                    </p>
+                  </div>
                 </div>
 
                 {/* Small benefits */}
                 <div className="space-y-2 px-1">
-                  {['첫 매수 전 체크리스트', '투자상태별 1:1 맞춤 진단'].map((b) => (
-                    <div key={b} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                      <span className="text-sm text-slate-400">{b}</span>
-                    </div>
-                  ))}
+                  <div className="flex items-center gap-3">
+                    <img src="/icon-analysis.png" alt="" className="w-8 h-8 object-contain shrink-0 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                    <span className="text-sm text-slate-400">첫 매수 전 체크리스트</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <img src="/icon-ai.png" alt="" className="w-8 h-8 object-contain shrink-0 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
+                    <span className="text-sm text-slate-400">투자상태별 1:1 맞춤 진단</span>
+                  </div>
                 </div>
 
                 <p className="text-xs text-slate-600 pt-1">

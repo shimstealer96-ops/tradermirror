@@ -194,7 +194,7 @@ export default function LeadPopup({ isOpen, onClose }: LeadPopupProps) {
               </button>
               {/* 특별 배지 이미지 */}
               <div className="flex justify-center mb-3">
-                <img src="/badge-first-visitor.png" alt="첫 방문자 한정 혜택" className="h-14 object-contain drop-shadow-[0_0_16px_rgba(234,179,8,0.5)]" />
+                <img src="/badge-first-visitor-nobg.png" alt="첫 방문자 한정 혜택" className="h-24 object-contain drop-shadow-[0_0_20px_rgba(234,179,8,0.6)]" />
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-100 mb-2">
                 지금 내 투자상태, 어디서 막히는지 확인해보세요

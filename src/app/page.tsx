@@ -62,15 +62,6 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 export default function HomePage() {
   const [leadPopupOpen, setLeadPopupOpen] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!sessionStorage.getItem("lead_popup_dismissed")) {
-        setLeadPopupOpen(true);
-      }
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100">
       {/* Floating button */}

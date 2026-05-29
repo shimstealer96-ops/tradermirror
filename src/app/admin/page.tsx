@@ -69,8 +69,14 @@ export default function AdminPage() {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       const email = data?.user?.email ?? ''
-      if (ADMIN_EMAILS.includes(email)) setAuthorized(true)
-      else { setAuthorized(false); router.replace('/dashboard') }
+      if (!email) {
+        router.replace('/login?next=/admin')
+      } else if (ADMIN_EMAILS.includes(email)) {
+        setAuthorized(true)
+      } else {
+        setAuthorized(false)
+        router.replace('/dashboard')
+      }
     })
   }, [router])
 

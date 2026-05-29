@@ -42,6 +42,14 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${inter.variable} ${outfit.variable} h-full scroll-smooth`}>
       <head>
+        {/* Google Analytics */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-DNRYX4JZ4T" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-DNRYX4JZ4T');
+        `}} />
         {/* Meta Pixel Code */}
         <script dangerouslySetInnerHTML={{ __html: `
           !function(f,b,e,v,n,t,s)

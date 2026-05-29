@@ -120,10 +120,11 @@ export default function AdminPage() {
   }
 
   const exportLeadsCSV = () => {
-    const headers = ['신청일시', '유입경로', '성함', '연락처', '이메일', '투자경험', '관심투자', '막히는부분', '원하는혜택', '상태', '쿠폰발송', '메모']
+    const headers = ['신청일시', '유입경로', '성함', '연락처', '이메일', '투자경험', '관심투자', '막히는부분', '투자금규모', '희망안내방식', '원하는혜택', '상태', '쿠폰발송', '메모']
     const rows = leads.map(l => [
       l.created_at ?? '', sourceLabel[l.source] ?? l.source, l.name, l.phone, l.email,
       l.investment_experience ?? '', l.investment_interest ?? '', l.pain_point ?? '',
+      (l as any).investment_amount ?? '', (l as any).preferred_contact ?? '',
       (l.desired_benefits ?? []).join(' / '), l.status ?? '', l.coupon_sent ? 'O' : 'X', l.admin_memo ?? '',
     ])
     const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -245,7 +246,7 @@ export default function AdminPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-800 text-slate-500 text-xs">
-                        {['신청일시','유입경로','성함','연락처','이메일','투자경험','관심투자','막히는부분','원하는혜택','상태','쿠폰','메모'].map(h => (
+                        {['신청일시','유입경로','성함','연락처','이메일','투자경험','관심투자','막히는부분','투자금규모','희망안내방식','원하는혜택','상태','쿠폰','메모'].map(h => (
                           <th key={h} className="px-4 py-3 text-left whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
@@ -267,6 +268,8 @@ export default function AdminPage() {
                           <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{lead.investment_experience ?? '-'}</td>
                           <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{lead.investment_interest ?? '-'}</td>
                           <td className="px-4 py-3 text-slate-400 text-xs max-w-[160px] truncate">{lead.pain_point ?? '-'}</td>
+                          <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{(lead as any).investment_amount ?? '-'}</td>
+                          <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{(lead as any).preferred_contact ?? '-'}</td>
                           <td className="px-4 py-3 text-slate-400 text-xs max-w-[160px] truncate">{(lead.desired_benefits ?? []).join(', ') || '-'}</td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             <select value={lead.status ?? '신규'} onChange={e => updateField(lead.id!, 'status', e.target.value)}
